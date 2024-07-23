@@ -1,0 +1,6 @@
+pyyaml
+docopt
+
+numpy
+adios2
+matplotlib
