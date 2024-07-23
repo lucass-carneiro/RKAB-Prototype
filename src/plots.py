@@ -36,6 +36,7 @@ def plot_time_steps(domain: dom.Domain, stream: adios2.Stream):
                 y_data.append(y)
                 z_data.append(u[i, j, k])
 
+        plt.close("all")
         plt.tricontourf(x_data, y_data, z_data, levels=100, cmap="RdBu")
         plt.xlabel("x")
         plt.ylabel("y")
