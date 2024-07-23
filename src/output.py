@@ -21,7 +21,7 @@ def write_domain_data(stream: adios2.Stream, domain: dom.Domain):
 
 
 def write_time_step(stream: adios2.Stream, iteration: int, time: float, state_vector: stv.StateVector):
-    print("Saving")
+    print(f"Saving iteration {iteration}")
 
     stream.begin_step()
 

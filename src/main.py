@@ -38,6 +38,20 @@ def evolve(args):
     init.initialize(parameters, state_vector)
     out.write_time_step(output_stream, 0, 0, state_vector)
 
+    # Time stepping loop
+    dt = parameters.domain.delta * parameters.courant_factor
+
+    for iteration in range(1, parameters.last_iter + 1):
+        # Current time
+        t = iteration * dt
+
+        # Compute RHS
+
+        # Time step
+
+        # Output
+        out.write_time_step(output_stream, iteration, t, state_vector)
+
     # Close output stream
     output_stream.close()
 
