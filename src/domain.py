@@ -52,7 +52,7 @@ class Domain:
                     yield Point(i, j, k, x, y, z)
 
     def ghost_points(self):
-        ghost_idx = *range(self.ghosts), *range(self.n_int + 1, self.n)
+        ghost_idx = *range(self.ghosts), *range(self.n_int + 1, self.n_all)
         for k in ghost_idx:
             for j in ghost_idx:
                 for i in ghost_idx:

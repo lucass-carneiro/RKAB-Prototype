@@ -4,19 +4,19 @@ derivatives:
 domain:
   start: -1.0
   end: 1.0
-  points: 21
+  points: 41
 
 time:
-  last-iter: 1
-  courant-factor: 0.5
+  last-iter: 15
+  courant-factor: 0.25
 
 initial-data:
   type: "standing-wave"
   standing-wave:
     A: 1.0
-    Kx: 1.0
-    Ky: 1.0
-    Kz: 1.0
+    Kx: 1.25
+    Ky: 1.25
+    Kz: 1.25
 
 RKAB:
   c1: 1.0

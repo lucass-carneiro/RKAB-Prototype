@@ -17,6 +17,7 @@ import state_vector as stv
 import right_hand_side as rhs
 import output as out
 import plots as plt
+import update as upd
 import init
 
 import adios2
@@ -45,9 +46,16 @@ def evolve(args):
         # Current time
         t = iteration * dt
 
+        print(f"Computing iteration {iteration}, t = {t}")
+
         # Compute RHS
+        upd.compute_rhs(parameters.domain, state_vector, right_hand_side)
 
         # Time step
+        upd.update(parameters.domain, dt, state_vector, right_hand_side)
+
+        # Apply BCs
+        upd.apply_bcs(parameters.domain, state_vector)
 
         # Output
         out.write_time_step(output_stream, iteration, t, state_vector)

@@ -18,6 +18,8 @@ mpl.rcParams["ytick.labelsize"] = font_size
 
 
 def plot_time_steps(domain: dom.Domain, stream: adios2.Stream):
+    levels = np.linspace(-1.0, 1.0, 100)
+
     for _ in stream.steps():
         iter = stream.current_step()
         print(f"Plotting iteration {iter}")
@@ -37,7 +39,7 @@ def plot_time_steps(domain: dom.Domain, stream: adios2.Stream):
                 z_data.append(u[i, j, k])
 
         plt.close("all")
-        plt.tricontourf(x_data, y_data, z_data, levels=100, cmap="RdBu")
+        plt.tricontourf(x_data, y_data, z_data, levels=levels, cmap="RdBu")
         plt.xlabel("x")
         plt.ylabel("y")
         plt.colorbar()

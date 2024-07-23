@@ -1,5 +1,4 @@
 import domain as dom
-
 import numpy as np
 
 
