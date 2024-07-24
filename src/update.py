@@ -22,7 +22,7 @@ def compute_rhs(domain: dom.Domain, state: stv.StateVector, rhs: rhs.RightHandSi
         rhs.rho_rhs[i, j, k] = d2udx2 + d2udy2 + d2udz2
 
 
-def update(domain: dom.Domain, dt: float, state: stv.StateVector, rhs: rhs.RightHandSide):
+def update(domain: dom.Domain, state: stv.StateVector, rhs: rhs.RightHandSide):
     for p in domain.interior_points():
         i, j, k = p.idx()
 
@@ -31,9 +31,10 @@ def update(domain: dom.Domain, dt: float, state: stv.StateVector, rhs: rhs.Right
         state.rho[1, i, j, k] = state.rho[0, i, j, k]
 
         # 2. Update the current time level
-        state.u[0, i, j, k] = state.u[0, i, j, k] + dt * rhs.u_rhs[i, j, k]
+        state.u[0, i, j, k] = state.u[0, i, j, k] + \
+            domain.dt * rhs.u_rhs[i, j, k]
         state.rho[0, i, j, k] = state.rho[0, i, j, k] + \
-            dt * rhs.rho_rhs[i, j, k]
+            domain.dt * rhs.rho_rhs[i, j, k]
 
 
 def apply_bcs(domain: dom.Domain, state: stv.StateVector):

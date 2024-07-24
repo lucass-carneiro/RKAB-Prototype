@@ -40,11 +40,9 @@ def evolve(args):
     out.write_time_step(output_stream, 0, 0, state_vector)
 
     # Time stepping loop
-    dt = parameters.domain.delta * parameters.courant_factor
-
     for iteration in range(1, parameters.last_iter + 1):
         # Current time
-        t = iteration * dt
+        t = iteration * parameters.domain.dt
 
         print(f"Computing iteration {iteration}, t = {t}")
 
@@ -52,7 +50,7 @@ def evolve(args):
         upd.compute_rhs(parameters.domain, state_vector, right_hand_side)
 
         # Time step
-        upd.update(parameters.domain, dt, state_vector, right_hand_side)
+        upd.update(parameters.domain, state_vector, right_hand_side)
 
         # Apply BCs
         upd.apply_bcs(parameters.domain, state_vector)

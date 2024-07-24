@@ -21,7 +21,7 @@ class Point:
 
 
 class Domain:
-    def __init__(self, start: float, end: float, n: int, ghosts: int):
+    def __init__(self, start: float, end: float, n: int, ghosts: int, courant_factor: float):
         self.int_start = start
         self.int_end = end
         self.ghosts = ghosts
@@ -29,6 +29,7 @@ class Domain:
         self.n_int = n
         self.n_all = self.n_int + 2 * self.ghosts
         self.delta = (self.int_end - self.int_start) / (self.n_int - 1)
+        self.dt = self.delta * courant_factor
 
         self.all_start = self.int_start - self.ghosts * self.delta
         self.all_end = self.int_end + self.ghosts * self.delta

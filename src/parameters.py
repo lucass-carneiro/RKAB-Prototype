@@ -12,15 +12,16 @@ class Parameters:
             raise RuntimeError(f"Unsoported derivative order {
                                self.derivative_order}. Derivative orders must be divisible by 2")
 
+        self.last_iter = file_dict["time"]["last-iter"]
+        self.courant_factor = file_dict["time"]["courant-factor"]
+
         self.domain = dom.Domain(
             file_dict["domain"]["start"],
             file_dict["domain"]["end"],
             file_dict["domain"]["points"],
-            int(self.derivative_order / 2)
+            int(self.derivative_order / 2),
+            self.courant_factor
         )
-
-        self.last_iter = file_dict["time"]["last-iter"]
-        self.courant_factor = file_dict["time"]["courant-factor"]
 
         self.id_type = file_dict["initial-data"]["type"]
 

@@ -13,20 +13,26 @@ def standing_wave_initialize(parameters: par.Parameters, state_vector: stv.State
 
     omega = np.sqrt(kx * kx + ky * ky + kz * kz)
 
-    for p in parameters.domain.all_points():
-        t = 0
-        i, j, k = p.idx()
-        x, y, z = p.pos()
-
-        u = A * np.cos(2 * np.pi * omega * t) * np.cos(2 * np.pi * kx * x) * \
+    def u(t, x, y, z):
+        return A * np.cos(2 * np.pi * omega * t) * np.cos(2 * np.pi * kx * x) * \
             np.cos(2 * np.pi * ky * y) * np.cos(2 * np.pi * kz * z)
 
-        rho = A * (-2 * np.pi * omega) * np.sin(2 * np.pi * omega * t) * \
+    def rho(t, x, y, z):
+        return A * (-2 * np.pi * omega) * np.sin(2 * np.pi * omega * t) * \
             np.cos(2 * np.pi * kx * x) * np.cos(2 * np.pi * ky * y) * \
             np.cos(2 * np.pi * kz * z)
 
-        state_vector.u[0, i, j, k] = u
-        state_vector.rho[0, i, j, k] = rho
+    for p in parameters.domain.all_points():
+        i, j, k = p.idx()
+        x, y, z = p.pos()
+
+        # Current time level
+        state_vector.u[0, i, j, k] = u(0, x, y, z)
+        state_vector.rho[0, i, j, k] = rho(0, x, y, z)
+
+        # Previous time level
+        state_vector.u[1, i, j, k] = u(-parameters.domain.dt, x, y, z)
+        state_vector.rho[1, i, j, k] = rho(-parameters.domain.dt, x, y, z)
 
 
 def initialize(parameters: par.Parameters, state_vector: stv.StateVector):
