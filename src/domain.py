@@ -53,10 +53,11 @@ class Domain:
 
     def ghost_points(self):
         ghost_idx = *range(self.ghosts), *range(self.n_int + 1, self.n_all)
-        for k in ghost_idx:
-            for j in ghost_idx:
-                for i in ghost_idx:
-                    x = self.all_start + i * self.delta
-                    y = self.all_start + j * self.delta
-                    z = self.all_start + k * self.delta
-                    yield Point(i, j, k, x, y, z)
+
+        def is_ghost(p: Point):
+            if p.i in ghost_idx or p.j in ghost_idx or p.k in ghost_idx:
+                return True
+            else:
+                return False
+
+        return itertools.takewhile(is_ghost, self.all_points())
