@@ -4,3 +4,4 @@ docopt
 numpy
 adios2
 matplotlib
+h5py
