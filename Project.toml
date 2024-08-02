@@ -1,0 +1,14 @@
+name = "RKAB"
+uuid = "dd406c5c-cd5b-45ab-98d4-e625e1f09857"
+version = "0.1.0"
+authors = ["lucass-carneiro <lucas.t.s.carneiro@gmail.com>"]
+
+[deps]
+HDF5 = "f67ccb44-e63f-5c2f-98bd-6dc0ccc4ba2f"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+SummationByPartsOperators = "9f78cca6-572e-554e-b819-917d2f1cf240"
+
+[compat]
+HDF5 = "0.17.2"
+LinearAlgebra = "1.11.0"
+SummationByPartsOperators = "0.5.66"

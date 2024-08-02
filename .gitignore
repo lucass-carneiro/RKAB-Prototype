@@ -1,6 +1,6 @@
 venv/*
 src/__pycache__
 
-*.bp/
 *.h5
 *.png
+*.pdf
