@@ -6,20 +6,21 @@ using SummationByPartsOperators
 
 function evolve()
     # Domain
-    x0 = -1.0
-    xf = 1.0
+    r0 = -1.0
+    rf = 1.0
     num_pts = 81
-    dx = (xf - x0) / (num_pts - 1)
+    dr = (rf - r0) / (num_pts - 1)
 
     # Time steps
     final_time = 1.0
-    cfl = 0.9
-    dt = cfl * dx
+    cfl = 0.25
+    dt = cfl * dr
     last_iter = convert(Int, ceil(final_time / dt))
 
     # Standing wave params
     A = 1.0
     kx = 1.0
+    ky = 1.0
 
     # RKAB cs
     c0 = 0.0
@@ -36,7 +37,7 @@ function evolve()
     cs = [c0, c1, c2, c3, c4, c5, c6, c7, c8, c9]
 
     # IO
-    h5_file = h5open("1d_output.h5", "w")
+    h5_file = h5open("2d_output.h5", "w")
     state_group = create_group(h5_file, "state")
     rhs_group = create_group(h5_file, "rhs")
     grid_group = create_group(h5_file, "grid")
@@ -46,33 +47,39 @@ function evolve()
         DienerDorbandSchnetterTiglio2007(),
         derivative_order=1,
         accuracy_order=4,
-        xmin=x0,
-        xmax=xf,
+        xmin=r0,
+        xmax=rf,
         N=num_pts
     )
 
     # GridFuncs
-    y = GridFuncs(num_pts)
+    y = GridFuncs2D(num_pts)
     
     # Previous state
-    yp = GridFuncs(num_pts)
+    yp = GridFuncs2D(num_pts)
     
     # RHS
-    dy = GridFuncs(num_pts)
+    dy = GridFuncs2D(num_pts)
 
     # RKAB Ks (k0 .. k3 for each variable)
-    ks = Substeps(num_pts)
-    
+    ks = Substeps2D(num_pts)
+
     # Init state and previous state
     for i in 0:(num_pts - 1)
-        x = x0 + i * dx
-        y.Phi[i + 1] = sw_Phi(A, kx, 0.0, x)
-        y.Pi[i + 1] = sw_Pi(A, kx, 0.0, x)
-        y.Dx[i + 1] = sw_Dx(A, kx, 0.0, x)
+        for j in 0:(num_pts - 1)
+            X = r0 + i * dr
+            Y = r0 + j * dr
+            
+            y.Phi[i + 1, j + 1] = sw_Phi(A, kx, ky, 0.0, X, Y)
+            y.Pi[i + 1, j + 1] = sw_Pi(A, kx, ky, 0.0, X, Y)
+            y.Dx[i + 1, j + 1] = sw_Dx(A, kx, ky, 0.0, X, Y)
+            y.Dy[i + 1, j + 1] = sw_Dy(A, kx, ky, 0.0, X, Y)
 
-        yp.Phi[i + 1] = sw_Phi(A, kx, -dt, x)
-        yp.Pi[i + 1] = sw_Pi(A, kx, -dt, x)
-        yp.Dx[i + 1] = sw_Dx(A, kx, -dt, x)
+            dy.Phi[i + 1, j + 1] = sw_Phi(A, kx, ky, -dt, X, Y)
+            dy.Pi[i + 1, j + 1] = sw_Pi(A, kx, ky, -dt, X, Y)
+            dy.Dx[i + 1, j + 1] = sw_Dx(A, kx, ky, -dt, X, Y)
+            dy.Dy[i + 1, j + 1] = sw_Dy(A, kx, ky, -dt, X, Y)
+        end
     end
 
     # Write grid and initial state
@@ -82,26 +89,19 @@ function evolve()
 
     attributes(h5_file)["A"]  = A
     attributes(h5_file)["kx"]  = kx
+    attributes(h5_file)["ky"]  = kx
     
     write(grid_group, "x_coords", collect(grid(D)))
+    write(grid_group, "y_coords", collect(grid(D)))
     write_state(state_group, 0, y)
     write_rhs(rhs_group, 0, dy)
 
-    # Iterate
     for i in 1:last_iter
         t = i * dt
         
         @info "Iteration $i, t = $t"
         @info "  Stepping"
-        rkab_step!(dt, cs, D, ks, yp, y, dy)
-
-        @info "  Applying BCs"
-        apply_dirichlet_bcs!(A, kx, t, x0, xf, y)
-
-        @info "  Saving"
-        write_state(state_group, i, y)
-        write_rhs(rhs_group, i, dy)
-     end
+    end
 
     close(h5_file)
 end

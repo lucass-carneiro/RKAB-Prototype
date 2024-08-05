@@ -2,6 +2,7 @@
 
 Usage:
   plot.py 1d [options] <data-file>
+  plot.py 2d [options] <data-file>
   plot.py (-h | --help)
   plot.py --version
 
@@ -52,6 +53,7 @@ def plot_gfs_1d(h5_file, prefix, gfs, iteration, iteration_string, dt, x, font_s
         plt.plot(x, h5_file[gf_path][:], color=color, label=name)
 
     plt.xlim(-1.0, 1.0)
+    plt.ylim(-7.0, 7.0)
 
     plt.xlabel("$x$", size=font_size)
     plt.ylabel("$f(x)$", size=font_size)
@@ -64,7 +66,7 @@ def plot_gfs_1d(h5_file, prefix, gfs, iteration, iteration_string, dt, x, font_s
     plt.savefig(
         os.path.join(
             path,
-            f"1D_{prefix}_it_{iteration_string}.pdf"
+            f"2D_{prefix}_it_{iteration_string}.pdf"
         )
     )
 
@@ -83,6 +85,7 @@ def plot_expected_1d(h5_file, prefix, gfs, iteration, iteration_string, dt, x, f
         plt.plot(x, data, color=color, label=f"|True{name} - {name}|")
 
     plt.xlim(-1.0, 1.0)
+    plt.ylim(0.0, 8.0e-3)
 
     plt.xlabel("$x$", size=font_size)
     plt.ylabel("$f(x)$", size=font_size)
@@ -100,7 +103,7 @@ def plot_expected_1d(h5_file, prefix, gfs, iteration, iteration_string, dt, x, f
     )
 
 
-def plot_1d(args, font_size, gfs, rhs_gfs, h5_file):
+def plot_1d(args, font_size, h5_file):
     last_iter = h5_file.attrs["last_iter"]
     dt = h5_file.attrs["dt"]
     x = h5_file["grid/x_coords"][:]
@@ -115,6 +118,18 @@ def plot_1d(args, font_size, gfs, rhs_gfs, h5_file):
             0,
             last_iter + 1
         )
+
+    gfs = [
+        ("Phi", "red"),
+        ("Pi", "black"),
+        ("Dx", "blue")
+    ]
+
+    rhs_gfs = [
+        ("Phi_rhs", "red"),
+        ("Pi_rhs", "black"),
+        ("Dx_rhs", "blue")
+    ]
 
     plots_dir = "1d_plots"
     state_dir = os.path.join(plots_dir, "state")
@@ -175,6 +190,117 @@ def plot_1d(args, font_size, gfs, rhs_gfs, h5_file):
         )
 
 
+def plot_gfs_2d(h5_file, prefix, gfs, iteration, iteration_string, dt, x, y, font_size, path):
+    t = iteration * dt
+
+    lev_array = np.linspace(-1.0, 1.0, endpoint=True, num=101)
+
+    for name in gfs:
+        plt.close("all")
+        gf_path = f"{prefix}/{name}_{iteration_string}"
+
+        if name == "Phi":
+            lev = lev_array
+        else:
+            lev = 100
+
+        # We transpose the data because Julia uses column major ordering
+        plt.contourf(
+            x,
+            y,
+            h5_file[gf_path][:],
+            levels=lev,
+            cmap="RdBu"
+        )
+
+        plt.xlim(-1.0, 1.0)
+        plt.ylim(-1.0, 1.0)
+
+        plt.xlabel("$x$", size=font_size)
+        plt.ylabel("$y$", size=font_size)
+
+        plt.title(f"{prefix}/{name} at iteration {iteration}, $t = {t}$")
+
+        cb = plt.colorbar()
+        cb.ax.set_ylabel(name)
+
+        plt.tight_layout()
+
+        plt.savefig(
+            os.path.join(
+                path,
+                f"1D_{prefix}_{name}_it_{iteration_string}.png"
+            )
+        )
+
+
+def plot_2d(args, font_size, h5_file):
+    last_iter = h5_file.attrs["last_iter"]
+    dt = h5_file.attrs["dt"]
+    x = h5_file["grid/x_coords"][:]
+    y = h5_file["grid/y_coords"][:]
+
+    if args["--iterations"] != "all":
+        iteration_range = range(
+            int(args["--iterations"]),
+            int(args["--iterations"]) + 1
+        )
+    else:
+        iteration_range = range(
+            0,
+            last_iter + 1
+        )
+
+    gfs = [
+        "Phi",
+        "Pi",
+        "Dx",
+        "Dy",
+    ]
+
+    rhs_gfs = [
+        "Phi_rhs",
+        "Pi_rhs",
+        "Dx_rhs",
+        "Dy_rhs",
+    ]
+
+    plots_dir = "2d_plots"
+    state_dir = os.path.join(plots_dir, "state")
+    rhs_dir = os.path.join(plots_dir, "rhs")
+    expected_dir = os.path.join(plots_dir, "expected")
+
+    if not os.path.exists(plots_dir):
+        os.mkdir(plots_dir)
+
+    if not os.path.exists(state_dir):
+        os.mkdir(state_dir)
+
+    if not os.path.exists(rhs_dir):
+        os.mkdir(rhs_dir)
+
+    if not os.path.exists(expected_dir):
+        os.mkdir(expected_dir)
+
+    for iteration in iteration_range:
+        iteration_string = f"{iteration:04}"
+
+        logging.info(f"Plotting iteration {iteration_string}")
+
+        plot_gfs_2d(
+            h5_file,
+            "state",
+            gfs,
+            iteration,
+            iteration_string,
+            dt,
+            x,
+            y,
+            font_size,
+            state_dir
+        )
+
+
 def main(args):
     logging.basicConfig(
         format="[%(asctime)s] [PID: %(process)d] %(levelname)s: %(message)s",
@@ -194,20 +320,10 @@ def main(args):
     mpl.rcParams["xtick.labelsize"] = font_size
     mpl.rcParams["ytick.labelsize"] = font_size
 
-    gfs = [
-        ("Phi", "red"),
-        ("Pi", "black"),
-        ("Dx", "blue")
-    ]
-
-    rhs_gfs = [
-        ("Phi_rhs", "red"),
-        ("Pi_rhs", "black"),
-        ("Dx_rhs", "blue")
-    ]
-
     if args["1d"]:
-        plot_1d(args, font_size, gfs, rhs_gfs, h5_file)
+        plot_1d(args, font_size, h5_file)
+    elif args["2d"]:
+        plot_2d(args, font_size, h5_file)
 
     h5_file.close()
 
