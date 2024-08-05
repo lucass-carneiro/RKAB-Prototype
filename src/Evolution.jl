@@ -19,8 +19,8 @@ function compute_rhs!(D::DerivativeOperator, y::GridFuncs, dy::GridFuncs)
     compute_Dx_rhs!(D, y.Pi, dy.Dx)
 end
 
-function compute_rhs!(D::DerivativeOperator, Phi, Pi, Dx, dy::GridFuncs)
-    compute_Phi_rhs!(Phi, dy.Phi)
+function compute_rhs!(D::DerivativeOperator, Pi::Vector{Float64}, Dx::Vector{Float64}, dy::GridFuncs)
+    compute_Phi_rhs!(Pi, dy.Phi)
     compute_Pi_rhs!(D, Dx, dy.Pi)
     compute_Dx_rhs!(D, Pi, dy.Dx)
 end
@@ -44,7 +44,7 @@ function compute_k1!(h, cs, D::DerivativeOperator, ks::Substeps, y::GridFuncs, d
     @. ks.k1_Dx = y.Dx+ h * c0 * ks.k0_Dx
 
     # Step 2: Compute the RHS using the values in ks.k1_[...] as state
-    compute_rhs!(D, ks.k1_Phi, ks.k1_Pi, ks.k1_Dx, dy)
+    compute_rhs!(D, ks.k1_Pi, ks.k1_Dx, dy)
 
     # Step 3: Copy the results in dy back to ks.k1_[...]
     copy!(ks.k1_Phi, dy.Phi)
@@ -62,7 +62,7 @@ function compute_k2!(h, cs, D::DerivativeOperator, ks::Substeps, y::GridFuncs, d
     @. ks.k2_Dx = y.Dx + h * (c1 * ks.k1_Dx + c2 * ks.k0_Dx)
 
     # Step 2: Compute the RHS using the values in ks.k2_[...] as state
-    compute_rhs!(D, ks.k2_Phi, ks.k2_Pi, ks.k2_Dx, dy)
+    compute_rhs!(D, ks.k2_Pi, ks.k2_Dx, dy)
 
     # Step 3: Copy the results in dy back to ks.k2_[...]
     copy!(ks.k2_Phi, dy.Phi)
@@ -81,7 +81,7 @@ function compute_k3!(h, cs, D::DerivativeOperator, ks::Substeps, y::GridFuncs, d
     @. ks.k3_Dx = y.Dx + h * (c3 * ks.k2_Dx + c4 * ks.k1_Dx + c5 * ks.k0_Dx)
 
     # Step 2: Compute the RHS using the values in ks.k3_[...] as state
-    compute_rhs!(D, ks.k3_Phi, ks.k3_Pi, ks.k3_Dx, dy)
+    compute_rhs!(D, ks.k3_Pi, ks.k3_Dx, dy)
 
     # Step 3: Copy the results in dy back to ks.k3_[...]
     copy!(ks.k3_Phi, dy.Phi)
