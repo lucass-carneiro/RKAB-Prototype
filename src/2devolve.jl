@@ -64,6 +64,9 @@ function evolve()
     # RKAB Ks (k0 .. k3 for each variable)
     ks = Substeps2D(num_pts)
 
+    # Scratch space for derivative values
+    d = Derivatives2D(num_pts)
+
     # Init state and previous state
     for i in 0:(num_pts - 1)
         for j in 0:(num_pts - 1)

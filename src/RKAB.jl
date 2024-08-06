@@ -7,10 +7,14 @@ include("InitialData.jl")
 include("InitialData2D.jl")
 
 include("Evolution.jl")
+include("Evolution2D.jl")
+
 include("IO.jl")
 
 export GridFuncs, GridFuncs2D
 export Substeps, Substeps2D
+
+export Derivatives2D
 
 export sw_Phi
 export sw_Pi

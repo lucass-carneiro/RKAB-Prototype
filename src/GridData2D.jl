@@ -61,3 +61,16 @@ struct Substeps2D
         )
     end
 end
+
+struct Derivatives2D
+    dDx_dx::Array{Float64}
+    dDy_dy::Array{Float64}
+
+    function Derivatives2D(n)
+        num_points = (n, n)
+        new(
+            zeros(Float64, num_points),
+            zeros(Float64, num_points)
+        )
+    end
+end
