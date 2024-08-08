@@ -67,7 +67,7 @@ function compute_k1!(h, cs, D::DerivativeOperator, ks::Substeps2D, d::Derivative
     copy!(ks.k1_Phi, dy.Phi)
     copy!(ks.k1_Pi, dy.Pi)
     copy!(ks.k1_Dx, dy.Dx)
-    copy!(ks.k1_Dx, dy.Dy)
+    copy!(ks.k1_Dy, dy.Dy)
 end
 
 function compute_k2!(h, cs, D::DerivativeOperator, ks::Substeps2D, d::Derivatives2D, y::GridFuncs2D, dy::GridFuncs2D)
@@ -94,7 +94,7 @@ function compute_k2!(h, cs, D::DerivativeOperator, ks::Substeps2D, d::Derivative
     copy!(ks.k2_Phi, dy.Phi)
     copy!(ks.k2_Pi, dy.Pi)
     copy!(ks.k2_Dx, dy.Dx)
-    copy!(ks.k2_Dx, dy.Dy)
+    copy!(ks.k2_Dy, dy.Dy)
 end
 
 function compute_k3!(h, cs, D::DerivativeOperator, ks::Substeps2D, d::Derivatives2D, y::GridFuncs2D, dy::GridFuncs2D)
@@ -122,7 +122,7 @@ function compute_k3!(h, cs, D::DerivativeOperator, ks::Substeps2D, d::Derivative
     copy!(ks.k3_Phi, dy.Phi)
     copy!(ks.k3_Pi, dy.Pi)
     copy!(ks.k3_Dx, dy.Dx)
-    copy!(ks.k3_Dx, dy.Dy)
+    copy!(ks.k3_Dy, dy.Dy)
 end
 
 function rkab_step!(h, cs, D::DerivativeOperator, ks::Substeps2D, d::Derivatives2D, yp::GridFuncs2D, y::GridFuncs2D, dy::GridFuncs2D)

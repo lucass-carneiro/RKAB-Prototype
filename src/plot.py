@@ -24,6 +24,8 @@ import matplotlib.pyplot as plt
 import os
 import sys
 
+import concurrent.futures
+
 import logging
 logger = logging.getLogger(__name__)
 
@@ -41,6 +43,26 @@ def Pi_1d(A, kx, t, x):
 def Dx_1d(A, kx, t, x):
     omega = np.sqrt(kx * kx)
     return 2*A*kx*np.pi*np.cos(2*omega*np.pi*t)*np.cos(2*kx*np.pi*x)
+
+
+def sw_Phi_2d(A, kx, ky, t, x, y):
+    omega = np.sqrt(kx * kx + ky * ky)
+    return A*np.cos(2*omega*np.pi*t)*np.sin(2*kx*np.pi*x)*np.sin(2*ky*np.pi*y)
+
+
+def sw_Pi_2d(A, kx, ky, t, x, y):
+    omega = np.sqrt(kx * kx + ky * ky)
+    return -2*A*omega*np.pi*np.sin(2*omega*np.pi*t)*np.sin(2*kx*np.pi*x)*np.sin(2*ky*np.pi*y)
+
+
+def sw_Dx_2d(A, kx, ky, t, x, y):
+    omega = np.sqrt(kx * kx + ky * ky)
+    return 2*A*kx*np.pi*np.cos(2*omega*np.pi*t)*np.cos(2*kx*np.pi*x)*np.sin(2*ky*np.pi*y)
+
+
+def sw_Dy_2d(A, kx, ky, t, x, y):
+    omega = np.sqrt(kx * kx + ky * ky)
+    return 2*A*ky*np.pi*np.cos(2*omega*np.pi*t)*np.sin(2*kx*np.pi*x)*np.cos(2*ky*np.pi*y)
 
 
 def plot_gfs_1d(h5_file, prefix, gfs, iteration, iteration_string, dt, x, font_size, path):
@@ -151,7 +173,7 @@ def plot_1d(args, font_size, h5_file):
     for iteration in iteration_range:
         iteration_string = f"{iteration:04}"
 
-        logging.info(f"Plotting iteration {iteration_string}")
+        logger.info(f"Plotting iteration {iteration_string}")
 
         plot_gfs_1d(
             h5_file,
@@ -190,55 +212,80 @@ def plot_1d(args, font_size, h5_file):
         )
 
 
-def plot_gfs_2d(h5_file, prefix, gfs, iteration, iteration_string, dt, x, y, font_size, path):
-    t = iteration * dt
+def plot_gfs_2d(x, y, data, levels, font_size, prefix, name, iteration, iteration_string, t, path):
+    plt.close("all")
+    plt.contourf(
+        x,
+        y,
+        data,
+        levels=levels,
+        cmap="RdBu"
+    )
 
-    lev_array = np.linspace(-1.0, 1.0, endpoint=True, num=101)
+    plt.xlim(-1.0, 1.0)
+    plt.ylim(-1.0, 1.0)
 
-    for name in gfs:
-        plt.close("all")
-        gf_path = f"{prefix}/{name}_{iteration_string}"
+    plt.xlabel("$x$", size=font_size)
+    plt.ylabel("$y$", size=font_size)
 
-        if name == "Phi":
-            lev = lev_array
-        else:
-            lev = 100
+    plt.title(f"{prefix}/{name} at iteration {iteration}, $t = {t}$")
 
-        # We transpose the data because Julia uses column major ordering
-        plt.contourf(
-            x,
-            y,
-            h5_file[gf_path][:],
-            levels=lev,
-            cmap="RdBu"
+    cb = plt.colorbar()
+    cb.ax.set_ylabel(name)
+
+    plt.tight_layout()
+
+    plt.savefig(
+        os.path.join(
+            path,
+            f"2D_{prefix}_{name}_it_{iteration_string}.png"
         )
+    )
 
-        plt.xlim(-1.0, 1.0)
-        plt.ylim(-1.0, 1.0)
 
-        plt.xlabel("$x$", size=font_size)
-        plt.ylabel("$y$", size=font_size)
+def plot_expected_2d(x, y, z, levels, font_size, prefix, name, iteration, iteration_string, t, path):
+    plt.close("all")
 
-        plt.title(f"{prefix}/{name} at iteration {iteration}, $t = {t}$")
+    # We transpose the data because Julia uses column major ordering
+    plt.contourf(
+        x,
+        y,
+        z,
+        levels=levels
+    )
 
-        cb = plt.colorbar()
-        cb.ax.set_ylabel(name)
+    plt.xlim(-1.0, 1.0)
+    plt.ylim(-1.0, 1.0)
 
-        plt.tight_layout()
+    plt.xlabel("$x$", size=font_size)
+    plt.ylabel("$y$", size=font_size)
 
-        plt.savefig(
-            os.path.join(
-                path,
-                f"1D_{prefix}_{name}_it_{iteration_string}.png"
-            )
+    plt.title(f"{prefix}/{name} at iteration {iteration}, $t = {t}$")
+
+    cb = plt.colorbar()
+    cb.ax.set_ylabel(name)
+
+    plt.tight_layout()
+
+    plt.savefig(
+        os.path.join(
+            path,
+            f"2D_{prefix}_{name}_it_{iteration_string}.png"
         )
+    )
 
 
 def plot_2d(args, font_size, h5_file):
     last_iter = h5_file.attrs["last_iter"]
     dt = h5_file.attrs["dt"]
+
     x = h5_file["grid/x_coords"][:]
     y = h5_file["grid/y_coords"][:]
+    X, Y = np.meshgrid(x, y)
+
+    A = h5_file.attrs["A"]
+    kx = h5_file.attrs["kx"]
+    ky = h5_file.attrs["kx"]
 
     if args["--iterations"] != "all":
         iteration_range = range(
@@ -282,23 +329,86 @@ def plot_2d(args, font_size, h5_file):
     if not os.path.exists(expected_dir):
         os.mkdir(expected_dir)
 
-    for iteration in iteration_range:
-        iteration_string = f"{iteration:04}"
+    level_array = np.linspace(-1.0, 1.0, endpoint=True, num=101)
+    err_level_array = np.linspace(0.0, 0.003, endpoint=True, num=101)
 
-        logging.info(f"Plotting iteration {iteration_string}")
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        for i in iteration_range:
+            logger.info(f"Dispatching plot of iteration {i}")
 
-        plot_gfs_2d(
-            h5_file,
-            "state",
-            gfs,
-            iteration,
-            iteration_string,
-            dt,
-            x,
-            y,
-            font_size,
-            state_dir
-        )
+            iteration_string = f"{i}".zfill(4)
+            t = i * dt
+
+            # Plot State
+            for gf in gfs:
+                path = f"state/{gf}_{iteration_string}"
+                data = h5_file[path][:]
+
+                if gf == "Phi":
+                    levels = level_array
+                else:
+                    levels = 100
+
+                executor.submit(
+                    plot_gfs_2d,
+                    x,
+                    y,
+                    data,
+                    levels,
+                    font_size,
+                    "state",
+                    gf,
+                    i,
+                    iteration_string,
+                    t,
+                    state_dir
+                )
+
+            # Plot RHS
+            for gf in rhs_gfs:
+                path = f"rhs/{gf}_{iteration_string}"
+                data = h5_file[path][:]
+
+                executor.submit(
+                    plot_gfs_2d,
+                    x,
+                    y,
+                    data,
+                    100,
+                    font_size,
+                    "rhs",
+                    gf,
+                    i,
+                    iteration_string,
+                    t,
+                    rhs_dir
+                )
+
+            # Plot Error
+            for gf in gfs:
+                path = f"state/{gf}_{iteration_string}"
+                data = h5_file[path][:]
+
+                z = np.abs(
+                    eval(f"sw_{gf}_2d")(A, kx, ky, t, X, Y) - data
+                )
+
+                executor.submit(
+                    plot_expected_2d,
+                    x,
+                    y,
+                    z,
+                    err_level_array,
+                    font_size,
+                    "state",
+                    gf,
+                    i,
+                    iteration_string,
+                    t,
+                    expected_dir
+                )
+
+        logger.info(f"Waiting for plot workers to finish")
 
 
 def main(args):
@@ -313,12 +423,13 @@ def main(args):
     font_size = int(args["--font-size"])
     data_file_name = args["<data-file>"]
 
-    h5_file = h5py.File(data_file_name, "r")
-
+    mpl.use("agg")
     mpl.rcParams["mathtext.fontset"] = "cm"
     mpl.rcParams["font.family"] = "Latin Modern Roman"
     mpl.rcParams["xtick.labelsize"] = font_size
     mpl.rcParams["ytick.labelsize"] = font_size
+
+    h5_file = h5py.File(data_file_name, "r")
 
     if args["1d"]:
         plot_1d(args, font_size, h5_file)

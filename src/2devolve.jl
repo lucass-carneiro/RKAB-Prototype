@@ -104,8 +104,8 @@ function evolve()
         
         @info "Iteration $i, t = $t"
         @info "  Stepping"
-        #rkab_step!(dt, cs, D, ks, d, yp, y, dy)
-        euler_step!(dt, D, d, y, dy)
+        rkab_step!(dt, cs, D, ks, d, yp, y, dy)
+        #euler_step!(dt, D, d, y, dy)
 
         @info "  Applying BCs"
         apply_dirichlet_bcs!(A, kx, ky, t, r0, dr, num_pts, y)
