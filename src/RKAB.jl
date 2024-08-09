@@ -11,12 +11,14 @@ include("Evolution2D.jl")
 
 include("IO.jl")
 
+include("Params.jl")
+
 export GridFuncs, GridFuncs2D
 export Substeps, Substeps2D
 
 export Derivatives2D
 
-export Params1D
+export Params1D, Params2D
 
 export sw_Phi
 export sw_Pi
