@@ -7,8 +7,10 @@ authors = ["lucass-carneiro <lucas.t.s.carneiro@gmail.com>"]
 HDF5 = "f67ccb44-e63f-5c2f-98bd-6dc0ccc4ba2f"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 SummationByPartsOperators = "9f78cca6-572e-554e-b819-917d2f1cf240"
+YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 
 [compat]
 HDF5 = "0.17.2"
 LinearAlgebra = "1.11.0"
 SummationByPartsOperators = "0.5.66"
+YAML = "0.4.12"

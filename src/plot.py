@@ -65,62 +65,49 @@ def sw_Dy_2d(A, kx, ky, t, x, y):
     return 2*A*ky*np.pi*np.cos(2*omega*np.pi*t)*np.sin(2*kx*np.pi*x)*np.cos(2*ky*np.pi*y)
 
 
-def plot_gfs_1d(h5_file, prefix, gfs, iteration, iteration_string, dt, x, font_size, path):
-    t = iteration * dt
-
+def plot_gfs_1d(x, data, name, font_size, prefix, iteration, iteration_string, t, path):
     plt.close("all")
 
-    for (name, color) in gfs:
-        gf_path = f"{prefix}/{name}_{iteration_string}"
-        plt.plot(x, h5_file[gf_path][:], color=color, label=name)
+    plt.plot(x, data, color="black")
 
     plt.xlim(-1.0, 1.0)
-    plt.ylim(-7.0, 7.0)
 
     plt.xlabel("$x$", size=font_size)
     plt.ylabel("$f(x)$", size=font_size)
 
-    plt.title(f"{prefix} at iteration {iteration}, $t = {t}$")
-    plt.legend()
+    plt.title(f"{prefix}/{name} at iteration {iteration}, $t = {t}$")
 
     plt.tight_layout()
 
     plt.savefig(
         os.path.join(
             path,
-            f"2D_{prefix}_it_{iteration_string}.pdf"
+            f"1D_{prefix}_{name}_it_{iteration_string}.pdf"
         )
     )
 
 
-def plot_expected_1d(h5_file, prefix, gfs, iteration, iteration_string, dt, x, font_size, path):
-    A = h5_file.attrs["A"]
-    kx = h5_file.attrs["kx"]
-    t = iteration * dt
-
+def plot_expected_1d(x, data, name, A, kx, font_size, prefix, iteration, iteration_string, t, path):
     plt.close("all")
 
-    for (name, color) in gfs:
-        gf_path = f"{prefix}/{name}_{iteration_string}"
-        expected = eval(f"{name}_1d")(A, kx, t, x)
-        data = np.abs(h5_file[gf_path][:] - expected)
-        plt.plot(x, data, color=color, label=f"|True{name} - {name}|")
+    expected = eval(f"{name}_1d")(A, kx, t, x)
+    y = np.abs(data - expected)
+    plt.plot(x, y, color="black")
 
     plt.xlim(-1.0, 1.0)
     plt.ylim(0.0, 8.0e-3)
 
     plt.xlabel("$x$", size=font_size)
-    plt.ylabel("$f(x)$", size=font_size)
+    plt.ylabel(f"|True{name} - {name}|", size=font_size)
 
-    plt.title(f"{prefix} at iteration {iteration}, $t = {t}$")
-    plt.legend()
+    plt.title(f"{prefix}/{name} error at iteration {iteration}, $t = {t}$")
 
     plt.tight_layout()
 
     plt.savefig(
         os.path.join(
             path,
-            f"1D_expected_{prefix}_it_{iteration_string}.pdf"
+            f"1D_expected_{prefix}_{name}_it_{iteration_string}.pdf"
         )
     )
 
@@ -128,7 +115,11 @@ def plot_expected_1d(h5_file, prefix, gfs, iteration, iteration_string, dt, x, f
 def plot_1d(args, font_size, h5_file):
     last_iter = h5_file.attrs["last_iter"]
     dt = h5_file.attrs["dt"]
+
     x = h5_file["grid/x_coords"][:]
+
+    A = h5_file.attrs["A"]
+    kx = h5_file.attrs["kx"]
 
     if args["--iterations"] != "all":
         iteration_range = range(
@@ -142,15 +133,15 @@ def plot_1d(args, font_size, h5_file):
         )
 
     gfs = [
-        ("Phi", "red"),
-        ("Pi", "black"),
-        ("Dx", "blue")
+        "Phi",
+        "Pi",
+        "Dx",
     ]
 
     rhs_gfs = [
-        ("Phi_rhs", "red"),
-        ("Pi_rhs", "black"),
-        ("Dx_rhs", "blue")
+        "Phi_rhs",
+        "Pi_rhs",
+        "Dx_rhs",
     ]
 
     plots_dir = "1d_plots"
@@ -170,46 +161,71 @@ def plot_1d(args, font_size, h5_file):
     if not os.path.exists(expected_dir):
         os.mkdir(expected_dir)
 
-    for iteration in iteration_range:
-        iteration_string = f"{iteration:04}"
+    level_array = np.linspace(-1.0, 1.0, endpoint=True, num=101)
+    err_level_array = np.linspace(0.0, 0.003, endpoint=True, num=101)
 
-        logger.info(f"Plotting iteration {iteration_string}")
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        for i in iteration_range:
+            logger.info(f"Dispatching plot of iteration {i}")
 
-        plot_gfs_1d(
-            h5_file,
-            "state",
-            gfs,
-            iteration,
-            iteration_string,
-            dt,
-            x,
-            font_size,
-            state_dir
-        )
+            iteration_string = f"{i:04}"
+            t = i * dt
 
-        plot_gfs_1d(
-            h5_file,
-            "rhs",
-            rhs_gfs,
-            iteration,
-            iteration_string,
-            dt,
-            x,
-            font_size,
-            rhs_dir
-        )
+            # Plot State
+            for gf in gfs:
+                path = f"state/{gf}_{iteration_string}"
+                data = h5_file[path][:]
 
-        plot_expected_1d(
-            h5_file,
-            "state",
-            gfs,
-            iteration,
-            iteration_string,
-            dt,
-            x,
-            font_size,
-            expected_dir
-        )
+                executor.submit(
+                    plot_gfs_1d,
+                    x,
+                    data,
+                    gf,
+                    font_size,
+                    "state",
+                    i,
+                    iteration_string,
+                    t,
+                    state_dir
+                )
+
+            # Plot RHS
+            for gf in rhs_gfs:
+                path = f"rhs/{gf}_{iteration_string}"
+                data = h5_file[path][:]
+
+                executor.submit(
+                    plot_gfs_1d,
+                    x,
+                    data,
+                    gf,
+                    font_size,
+                    "rhs",
+                    i,
+                    iteration_string,
+                    t,
+                    rhs_dir
+                )
+
+            # Plot error
+            for gf in gfs:
+                path = f"state/{gf}_{iteration_string}"
+                data = h5_file[path][:]
+
+                executor.submit(
+                    plot_expected_1d,
+                    x,
+                    data,
+                    gf,
+                    A,
+                    kx,
+                    font_size,
+                    "state",
+                    i,
+                    iteration_string,
+                    t,
+                    expected_dir
+                )
 
 
 def plot_gfs_2d(x, y, data, levels, font_size, prefix, name, iteration, iteration_string, t, path):
@@ -260,7 +276,7 @@ def plot_expected_2d(x, y, z, levels, font_size, prefix, name, iteration, iterat
     plt.xlabel("$x$", size=font_size)
     plt.ylabel("$y$", size=font_size)
 
-    plt.title(f"{prefix}/{name} at iteration {iteration}, $t = {t}$")
+    plt.title(f"{prefix}/{name} error at iteration {iteration}, $t = {t}$")
 
     cb = plt.colorbar()
     cb.ax.set_ylabel(name)
@@ -336,7 +352,7 @@ def plot_2d(args, font_size, h5_file):
         for i in iteration_range:
             logger.info(f"Dispatching plot of iteration {i}")
 
-            iteration_string = f"{i}".zfill(4)
+            iteration_string = f"{i:04}"
             t = i * dt
 
             # Plot State

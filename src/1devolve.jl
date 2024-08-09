@@ -4,39 +4,42 @@ using HDF5
 using LinearAlgebra
 using SummationByPartsOperators
 
-function evolve()
-    # Domain
-    x0 = -1.0
-    xf = 1.0
-    num_pts = 81
-    dx = (xf - x0) / (num_pts - 1)
+function main()
+    if size(ARGS, 1) == 1
+        config_file = ARGS[1]
+    else
+        config_file = "param_1d.yaml"
+    end
+    
+    @info "Using parameter file $config_file"
 
+    config_data = Params1D(config_file)
+
+    # Domain
+    x0 = config_data.domain_start
+    xf = config_data.domain_end
+    num_pts = config_data.domain_points
+    dx = (xf - x0) / (num_pts - 1)
+    
     # Time steps
-    final_time = 1.0
-    cfl = 0.9
+    final_time = config_data.time_final
+    cfl = config_data.time_cfl
     dt = cfl * dx
     last_iter = convert(Int, ceil(final_time / dt))
 
-    # Standing wave params
-    A = 1.0
-    kx = 1.0
+    @info "Spatial step = $dx"
+    @info "Time step = $dt"
+    @info "Total iterations: $last_iter"
 
-    # RKAB cs
-    c0 = 0.0
-    c1 = 0.3736646857963324
-    c2 = 0.03127973625120939
-    c3 = -0.14797683066152537
-    c4 = 0.33238257148754524
-    c5 = -0.0010981891892632696
-    c6 = -0.0547559191353386
-    c7 = 2.754535159970365
-    c8 = 3.414713672966062
-    c9 = 1 - c6 - c7 - c8
-    
-    cs = [c0, c1, c2, c3, c4, c5, c6, c7, c8, c9]
+    # Standing wave params
+    A = config_data.standing_wave_A
+    kx = config_data.standing_wave_kx
+
+    # RKAB cs    
+    cs = config_data.RKAB_coeffs
 
     # IO
-    h5_file = h5open("1d_output.h5", "w")
+    h5_file = h5open(config_data.output_file, "w")
     state_group = create_group(h5_file, "state")
     rhs_group = create_group(h5_file, "rhs")
     grid_group = create_group(h5_file, "grid")
@@ -106,4 +109,4 @@ function evolve()
     close(h5_file)
 end
 
-evolve()
+main()

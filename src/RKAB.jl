@@ -16,6 +16,8 @@ export Substeps, Substeps2D
 
 export Derivatives2D
 
+export Params1D
+
 export sw_Phi
 export sw_Pi
 export sw_Dx, sw_Dy

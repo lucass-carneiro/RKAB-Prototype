@@ -13,7 +13,7 @@ function evolve()
 
     # Time steps
     final_time = 1.0
-    cfl = 0.25
+    cfl = 0.9
     dt = cfl * dr
     last_iter = convert(Int, ceil(final_time / dt))
 
@@ -92,7 +92,7 @@ function evolve()
 
     attributes(h5_file)["A"]  = A
     attributes(h5_file)["kx"]  = kx
-    attributes(h5_file)["ky"]  = kx
+    attributes(h5_file)["ky"]  = ky
     
     write(grid_group, "x_coords", collect(grid(D)))
     write(grid_group, "y_coords", collect(grid(D)))
