@@ -3,6 +3,7 @@
 Usage:
   plot.py 1d [options] <data-file>
   plot.py 2d [options] <data-file>
+  plot.py 3d [options] <data-file>
   plot.py conv-time-1d [options] <coarse-data> <medium-data> <fine-data>
   plot.py (-h | --help)
   plot.py --version
@@ -12,6 +13,7 @@ Options:
   --version               Show version.
   --iterations=<number>   Plot a specific iteration or all [default: all]
   --font-size=<size>      The size of the font in plots [default: 18]
+  --slice-value=<value>   The value of the slicing coordinate [default: 0.0]
 """
 from docopt import docopt
 
@@ -260,6 +262,37 @@ def plot_gfs_2d(x, y, data, levels, font_size, prefix, name, iteration, iteratio
     )
 
 
+def plot_gfs_3d(x, y, data, levels, font_size, prefix, name, iteration, iteration_string, t, path):
+    plt.close("all")
+    plt.contourf(
+        x,
+        y,
+        data,
+        levels=levels,
+        cmap="RdBu"
+    )
+
+    plt.xlim(-1.0, 1.0)
+    plt.ylim(-1.0, 1.0)
+
+    plt.xlabel("$x$", size=font_size)
+    plt.ylabel("$y$", size=font_size)
+
+    plt.title(f"{prefix}/{name} at iteration {iteration}, $t = {t}$")
+
+    cb = plt.colorbar()
+    cb.ax.set_ylabel(name)
+
+    plt.tight_layout()
+
+    plt.savefig(
+        os.path.join(
+            path,
+            f"3D_{prefix}_{name}_it_{iteration_string}.png"
+        )
+    )
+
+
 def plot_expected_2d(x, y, z, levels, font_size, prefix, name, iteration, iteration_string, t, path):
     plt.close("all")
 
@@ -302,7 +335,7 @@ def plot_2d(args, font_size, h5_file):
 
     A = h5_file.attrs["A"]
     kx = h5_file.attrs["kx"]
-    ky = h5_file.attrs["kx"]
+    ky = h5_file.attrs["ky"]
 
     if args["--iterations"] != "all":
         iteration_range = range(
@@ -347,7 +380,7 @@ def plot_2d(args, font_size, h5_file):
         os.mkdir(expected_dir)
 
     level_array = np.linspace(-1.0, 1.0, endpoint=True, num=101)
-    err_level_array = np.linspace(0.0, 0.003, endpoint=True, num=101)
+    err_level_array = np.linspace(0.0, 0.001, endpoint=True, num=101)
 
     with concurrent.futures.ProcessPoolExecutor() as executor:
         for i in iteration_range:
@@ -423,6 +456,133 @@ def plot_2d(args, font_size, h5_file):
                     iteration_string,
                     t,
                     expected_dir
+                )
+
+        logger.info(f"Waiting for plot workers to finish")
+
+
+def plot_3d(args, font_size, h5_file):
+    last_iter = h5_file.attrs["last_iter"]
+    dt = h5_file.attrs["dt"]
+
+    x = h5_file["grid/x_coords"][:]
+    y = h5_file["grid/y_coords"][:]
+    z = h5_file["grid/y_coords"][:]
+
+    slice_value = float(args["--slice-value"])
+    slice_idx = np.where(np.isclose(z, slice_value))
+
+    if (np.size(slice_idx) == 0):
+        logger.error(f"Slice value {slice_value} of coordinate z not found")
+        return
+
+    slice_idx = slice_idx[0][0]
+    logger.info(f"Slicing coordinate z at value {slice_value}")
+
+    X, Y = np.meshgrid(x, y)
+
+    A = h5_file.attrs["A"]
+    kx = h5_file.attrs["kx"]
+    ky = h5_file.attrs["ky"]
+    kz = h5_file.attrs["kz"]
+
+    if args["--iterations"] != "all":
+        iteration_range = range(
+            int(args["--iterations"]),
+            int(args["--iterations"]) + 1
+        )
+    else:
+        iteration_range = range(
+            0,
+            last_iter + 1
+        )
+
+    gfs = [
+        "Phi",
+        "Pi",
+        "Dx",
+        "Dy",
+        "Dz",
+    ]
+
+    rhs_gfs = [
+        "Phi_rhs",
+        "Pi_rhs",
+        "Dx_rhs",
+        "Dy_rhs",
+        "Dz_rhs",
+    ]
+
+    plots_dir = "3d_plots"
+    state_dir = os.path.join(plots_dir, "state")
+    rhs_dir = os.path.join(plots_dir, "rhs")
+    expected_dir = os.path.join(plots_dir, "expected")
+
+    if not os.path.exists(plots_dir):
+        os.mkdir(plots_dir)
+
+    if not os.path.exists(state_dir):
+        os.mkdir(state_dir)
+
+    if not os.path.exists(rhs_dir):
+        os.mkdir(rhs_dir)
+
+    if not os.path.exists(expected_dir):
+        os.mkdir(expected_dir)
+
+    level_array = np.linspace(-1.0, 1.0, endpoint=True, num=101)
+    err_level_array = np.linspace(0.0, 0.001, endpoint=True, num=101)
+
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        for i in iteration_range:
+            logger.info(f"Dispatching plot of iteration {i}")
+
+            iteration_string = f"{i:04}"
+            t = i * dt
+
+            # Plot State
+            for gf in gfs:
+                path = f"state/{gf}_{iteration_string}"
+                data = h5_file[path][:, :, slice_idx]
+
+                if gf == "Phi":
+                    levels = level_array
+                else:
+                    levels = 100
+
+                executor.submit(
+                    plot_gfs_3d,
+                    x,
+                    y,
+                    data,
+                    levels,
+                    font_size,
+                    "state",
+                    gf,
+                    i,
+                    iteration_string,
+                    t,
+                    state_dir
+                )
+
+            # Plot RHS
+            for gf in rhs_gfs:
+                path = f"rhs/{gf}_{iteration_string}"
+                data = h5_file[path][:]
+
+                executor.submit(
+                    plot_gfs_3d,
+                    x,
+                    y,
+                    data,
+                    100,
+                    font_size,
+                    "rhs",
+                    gf,
+                    i,
+                    iteration_string,
+                    t,
+                    rhs_dir
                 )
 
         logger.info(f"Waiting for plot workers to finish")
@@ -533,6 +693,13 @@ def main(args):
         h5_file = h5py.File(data_file_name, "r")
 
         plot_2d(args, font_size, h5_file)
+
+        h5_file.close()
+    elif args["3d"]:
+        data_file_name = args["<data-file>"]
+        h5_file = h5py.File(data_file_name, "r")
+
+        plot_3d(args, font_size, h5_file)
 
         h5_file.close()
     elif args["conv-time-1d"]:

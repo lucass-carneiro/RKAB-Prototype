@@ -50,7 +50,7 @@ function evolve()
     D = derivative_operator(
         DienerDorbandSchnetterTiglio2007(),
         derivative_order=1,
-        accuracy_order=4,
+        accuracy_order=config_data.SBP_accuracy_order,
         xmin=r0,
         xmax=rf,
         N=num_pts
@@ -83,13 +83,13 @@ function evolve()
                 y.Pi[i + 1, j + 1, k + 1] = sw_Pi(A, kx, ky, kz, 0.0, X, Y, Z)
                 y.Dx[i + 1, j + 1, k + 1] = sw_Dx(A, kx, ky, kz, 0.0, X, Y, Z)
                 y.Dy[i + 1, j + 1, k + 1] = sw_Dy(A, kx, ky, kz, 0.0, X, Y, Z)
-                y.Dz[i + 1, j + 1, k + 1] = sw_Dy(A, kx, ky, kz, 0.0, X, Y, Z)
+                y.Dz[i + 1, j + 1, k + 1] = sw_Dz(A, kx, ky, kz, 0.0, X, Y, Z)
 
                 dy.Phi[i + 1, j + 1, k + 1] = sw_Phi(A, kx, ky, kz, -dt, X, Y, Z)
                 dy.Pi[i + 1, j + 1, k + 1] = sw_Pi(A, kx, ky, kz, -dt, X, Y, Z)
                 dy.Dx[i + 1, j + 1, k + 1] = sw_Dx(A, kx, ky, kz, -dt, X, Y, Z)
                 dy.Dy[i + 1, j + 1, k + 1] = sw_Dy(A, kx, ky, kz, -dt, X, Y, Z)
-                dy.Dz[i + 1, j + 1, k + 1] = sw_Dy(A, kx, ky, kz, -dt, X, Y, Z)
+                dy.Dz[i + 1, j + 1, k + 1] = sw_Dz(A, kx, ky, kz, -dt, X, Y, Z)
             end
         end
     end
