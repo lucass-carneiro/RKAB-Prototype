@@ -2,9 +2,11 @@ module RKAB
 
 include("GridData.jl")
 include("GridData2D.jl")
+include("GridData3D.jl")
 
 include("InitialData.jl")
 include("InitialData2D.jl")
+include("InitialData3D.jl")
 
 include("Evolution.jl")
 include("Evolution2D.jl")
@@ -13,12 +15,12 @@ include("IO.jl")
 
 include("Params.jl")
 
-export GridFuncs, GridFuncs2D
-export Substeps, Substeps2D
+export GridFuncs, GridFuncs2D, GridFuncs3D
+export Substeps, Substeps2D, Substeps3D
 
-export Derivatives2D
+export Derivatives2D, Derivatives3D
 
-export Params1D, Params2D
+export Params1D, Params2D, Params3D
 
 export sw_Phi
 export sw_Pi

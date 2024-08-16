@@ -25,7 +25,7 @@ function main()
     final_time = config_data.time_final
     cfl = config_data.time_cfl
     dt = cfl * dx
-    last_iter = convert(Int, ceil(final_time / dt))
+    last_iter = floor(Int, final_time / dt) + 1
 
     @info "Spatial step = $dx"
     @info "Time step = $dt"

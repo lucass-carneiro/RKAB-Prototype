@@ -3,6 +3,7 @@
 Usage:
   plot.py 1d [options] <data-file>
   plot.py 2d [options] <data-file>
+  plot.py conv-time-1d [options] <coarse-data> <medium-data> <fine-data>
   plot.py (-h | --help)
   plot.py --version
 
@@ -30,17 +31,17 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def Phi_1d(A, kx, t, x):
+def sw_Phi_1d(A, kx, t, x):
     omega = np.sqrt(kx * kx)
     return A*np.cos(2*omega*np.pi*t)*np.sin(2*kx*np.pi*x)
 
 
-def Pi_1d(A, kx, t, x):
+def sw_Pi_1d(A, kx, t, x):
     omega = np.sqrt(kx * kx)
     return -2*A*omega*np.pi*np.sin(2*omega*np.pi*t)*np.sin(2*kx*np.pi*x)
 
 
-def Dx_1d(A, kx, t, x):
+def sw_Dx_1d(A, kx, t, x):
     omega = np.sqrt(kx * kx)
     return 2*A*kx*np.pi*np.cos(2*omega*np.pi*t)*np.cos(2*kx*np.pi*x)
 
@@ -427,6 +428,82 @@ def plot_2d(args, font_size, h5_file):
         logger.info(f"Waiting for plot workers to finish")
 
 
+def conv_time_1d(args, font_size, h5_coarse, h5_medium, h5_fine):
+    A = h5_coarse.attrs["A"]
+    kx = h5_coarse.attrs["kx"]
+
+    x = h5_coarse["grid/x_coords"][:]
+
+    last_iter_coarse = h5_coarse.attrs["last_iter"]
+    last_iter_medium = h5_medium.attrs["last_iter"]
+    last_iter_fine = h5_fine.attrs["last_iter"]
+
+    dt_coarse = h5_coarse.attrs["dt"]
+    dt_medium = h5_medium.attrs["dt"]
+    dt_fine = h5_fine.attrs["dt"]
+
+    coarse_times = np.linspace(
+        0.0,
+        last_iter_coarse * dt_coarse,
+        endpoint=True,
+        num=(last_iter_coarse + 1)
+    )
+
+    medium_times = np.linspace(
+        0.0,
+        last_iter_medium * dt_medium,
+        endpoint=True,
+        num=(last_iter_medium + 1)
+    )
+
+    fine_times = np.linspace(
+        0.0,
+        last_iter_fine * dt_fine,
+        endpoint=True,
+        num=(last_iter_fine + 1)
+    )
+
+    medium_coarse_mask = []
+    for i in range(last_iter_medium + 1):
+        m_time = i * dt_medium
+
+        for c_time in coarse_times:
+            if np.isclose(m_time, c_time):
+                medium_coarse_mask.append(i)
+
+    fine_coarse_mask = []
+    for i in range(last_iter_fine + 1):
+        f_time = i * dt_fine
+
+        for c_time in coarse_times:
+            if np.isclose(f_time, c_time):
+                fine_coarse_mask.append(i)
+
+    coarse_test_iteration_idx = 1
+    test_time = coarse_test_iteration_idx * dt_coarse
+
+    medium_test_iteration_idx = medium_coarse_mask[coarse_test_iteration_idx]
+    fine_test_iteration_idx = fine_coarse_mask[coarse_test_iteration_idx]
+
+    coarse_test_iteration_idx_string = f"{coarse_test_iteration_idx:04}"
+    medium_test_iteration_idx_string = f"{medium_test_iteration_idx:04}"
+    fine_test_iteration_idx_string = f"{fine_test_iteration_idx:04}"
+
+    coarse_gf_string = f"state/Phi_{coarse_test_iteration_idx_string}"
+    medium_gf_string = f"state/Phi_{medium_test_iteration_idx_string}"
+    fine_gf_string = f"state/Phi_{fine_test_iteration_idx_string}"
+
+    coarse_gf = h5_coarse[coarse_gf_string][:]
+    medium_gf = h5_medium[medium_gf_string][:]
+    fine_gf = h5_fine[fine_gf_string][:]
+
+    exact_gf = sw_Phi_1d(A, kx, test_time, x)
+
+    print(np.linalg.norm(exact_gf - coarse_gf))
+    print(np.linalg.norm(exact_gf - medium_gf))
+    print(np.linalg.norm(exact_gf - fine_gf))
+
+
 def main(args):
     logging.basicConfig(
         format="[%(asctime)s] [PID: %(process)d] %(levelname)s: %(message)s",
@@ -437,7 +514,6 @@ def main(args):
     )
 
     font_size = int(args["--font-size"])
-    data_file_name = args["<data-file>"]
 
     mpl.use("agg")
     mpl.rcParams["mathtext.fontset"] = "cm"
@@ -445,14 +521,34 @@ def main(args):
     mpl.rcParams["xtick.labelsize"] = font_size
     mpl.rcParams["ytick.labelsize"] = font_size
 
-    h5_file = h5py.File(data_file_name, "r")
-
     if args["1d"]:
+        data_file_name = args["<data-file>"]
+        h5_file = h5py.File(data_file_name, "r")
+
         plot_1d(args, font_size, h5_file)
+
+        h5_file.close()
     elif args["2d"]:
+        data_file_name = args["<data-file>"]
+        h5_file = h5py.File(data_file_name, "r")
+
         plot_2d(args, font_size, h5_file)
 
-    h5_file.close()
+        h5_file.close()
+    elif args["conv-time-1d"]:
+        coarse_data = args["<coarse-data>"]
+        medium_data = args["<medium-data>"]
+        fine_data = args["<fine-data>"]
+
+        h5_coarse = h5py.File(coarse_data, "r")
+        h5_medium = h5py.File(medium_data, "r")
+        h5_fine = h5py.File(fine_data, "r")
+
+        conv_time_1d(args, font_size, h5_coarse, h5_medium, h5_fine)
+
+        h5_coarse.close()
+        h5_medium.close()
+        h5_fine.close()
 
 
 if __name__ == '__main__':
