@@ -24,7 +24,7 @@ export Params1D, Params2D, Params3D
 
 export sw_Phi
 export sw_Pi
-export sw_Dx, sw_Dy
+export sw_Dx, sw_Dy, sw_Dz
 
 export rkab_step!
 export euler_step!

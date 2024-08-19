@@ -85,11 +85,11 @@ function evolve()
                 y.Dy[i + 1, j + 1, k + 1] = sw_Dy(A, kx, ky, kz, 0.0, X, Y, Z)
                 y.Dz[i + 1, j + 1, k + 1] = sw_Dz(A, kx, ky, kz, 0.0, X, Y, Z)
 
-                dy.Phi[i + 1, j + 1, k + 1] = sw_Phi(A, kx, ky, kz, -dt, X, Y, Z)
-                dy.Pi[i + 1, j + 1, k + 1] = sw_Pi(A, kx, ky, kz, -dt, X, Y, Z)
-                dy.Dx[i + 1, j + 1, k + 1] = sw_Dx(A, kx, ky, kz, -dt, X, Y, Z)
-                dy.Dy[i + 1, j + 1, k + 1] = sw_Dy(A, kx, ky, kz, -dt, X, Y, Z)
-                dy.Dz[i + 1, j + 1, k + 1] = sw_Dz(A, kx, ky, kz, -dt, X, Y, Z)
+                yp.Phi[i + 1, j + 1, k + 1] = sw_Phi(A, kx, ky, kz, -dt, X, Y, Z)
+                yp.Pi[i + 1, j + 1, k + 1] = sw_Pi(A, kx, ky, kz, -dt, X, Y, Z)
+                yp.Dx[i + 1, j + 1, k + 1] = sw_Dx(A, kx, ky, kz, -dt, X, Y, Z)
+                yp.Dy[i + 1, j + 1, k + 1] = sw_Dy(A, kx, ky, kz, -dt, X, Y, Z)
+                yp.Dz[i + 1, j + 1, k + 1] = sw_Dz(A, kx, ky, kz, -dt, X, Y, Z)
             end
         end
     end
