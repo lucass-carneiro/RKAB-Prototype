@@ -588,7 +588,7 @@ def plot_3d(args, font_size, h5_file):
         os.mkdir(expected_dir)
 
     level_array = np.linspace(-1.0, 1.0, endpoint=True, num=101)
-    err_level_array = np.linspace(0.0, 0.001, endpoint=True, num=101)
+    err_level_array = np.linspace(0.0, 1.0, endpoint=True, num=101)
 
     with concurrent.futures.ProcessPoolExecutor() as executor:
         for i in iteration_range:
@@ -665,7 +665,7 @@ def plot_3d(args, font_size, h5_file):
                     x,
                     y,
                     z,
-                    err_level_array,
+                    100,
                     font_size,
                     "state",
                     gf,

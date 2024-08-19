@@ -10,6 +10,7 @@ include("InitialData3D.jl")
 
 include("Evolution.jl")
 include("Evolution2D.jl")
+include("Evolution3D.jl")
 
 include("IO.jl")
 
