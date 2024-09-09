@@ -1,3 +1,4 @@
+docopt
 numpy
 matplotlib
 h5py

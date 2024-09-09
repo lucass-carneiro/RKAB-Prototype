@@ -148,7 +148,7 @@ struct Params3D
 
     function Params3D(config_file)
         config_data = YAML.load_file(config_file)
-
+        
         domain_start = config_data["3d_params"]["domain"]["start"]
         domain_end = config_data["3d_params"]["domain"]["end"]
         domain_points = config_data["3d_params"]["domain"]["points"]
