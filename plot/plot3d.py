@@ -41,7 +41,7 @@ def plot_gfs_3d(x, y, data, levels, font_size, prefix, name, iteration, iteratio
         y,
         data,
         levels=levels,
-        cmap="RdBu"
+        cmap="RdBu_r"
     )
 
     plt.xlim(-1.0, 1.0)
@@ -105,9 +105,6 @@ def plot_3d(args, font_size, h5_file):
 
     slice_value = float(args["--slice-value"])
     slice_idx = np.where(np.isclose(z, slice_value))
-
-    slice_value = z[slice_idx]
-    logger.info(f"Actual slice used: {slice_value}")
 
     if (np.size(slice_idx) == 0):
         logger.error(f"Slice value {slice_value} of coordinate z not found")
@@ -184,15 +181,15 @@ def plot_3d(args, font_size, h5_file):
             # Plot State
             for gf in gfs:
                 path = f"state/{gf}_{iteration_string}"
-                data = h5_file[path][:, :, slice_idx]
+                data = h5_file[path][slice_idx, :, :]
 
                 if gf == "Phi":
                     levels = level_array
                 else:
                     levels = 100
 
-                executor.submit(
-                    plot_gfs_3d,
+                # executor.submit(
+                plot_gfs_3d(
                     X,
                     Y,
                     data,
@@ -209,7 +206,7 @@ def plot_3d(args, font_size, h5_file):
             # Plot RHS
             for gf in rhs_gfs:
                 path = f"rhs/{gf}_{iteration_string}"
-                data = h5_file[path][:, :, slice_idx]
+                data = h5_file[path][slice_idx, :, :]
 
                 executor.submit(
                     plot_gfs_3d,
@@ -229,7 +226,7 @@ def plot_3d(args, font_size, h5_file):
             # Plot Error
             for gf in gfs:
                 path = f"state/{gf}_{iteration_string}"
-                data = h5_file[path][:, :, slice_idx]
+                data = h5_file[path][slice_idx, :, :]
 
                 z = np.abs(
                     eval(f"sw_{gf}_3d")(
@@ -238,8 +235,8 @@ def plot_3d(args, font_size, h5_file):
                         ky,
                         kz,
                         t,
-                        x,
-                        y,
+                        X,
+                        Y,
                         slice_value
                     ) - data
                 )
