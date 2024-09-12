@@ -6,7 +6,7 @@
   
   time:
     final: 1.0
-    cfl: 0.9
+    cfl: 0.25
 
   standing-wave:
     A: 1.0
