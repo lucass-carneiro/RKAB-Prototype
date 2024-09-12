@@ -188,8 +188,8 @@ def plot_3d(args, font_size, h5_file):
                 else:
                     levels = 100
 
-                # executor.submit(
-                plot_gfs_3d(
+                executor.submit(
+                    plot_gfs_3d,
                     X,
                     Y,
                     data,

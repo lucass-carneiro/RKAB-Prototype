@@ -5,8 +5,8 @@
     points: 81
   
   time:
-    final: 1.0
-    cfl: 0.25
+    final: 2.0
+    cfl: 0.5
 
   standing-wave:
     A: 1.0
@@ -14,7 +14,7 @@
     ky: 1.0
     kz: 1.0
 
-  SBP-accuracy-order: 4
+  SBP-accuracy-order: 8
 
   RKAB-coeffs:
     c1: 0.3736646857963324

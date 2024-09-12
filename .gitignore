@@ -1,8 +1,9 @@
 1d_plots/*
 2d_plots/*
+3d_plots/*
 
 venv/*
-src/__pycache__
+plot/__pycache__
 
 *.h5
 *.png

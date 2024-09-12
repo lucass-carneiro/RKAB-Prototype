@@ -5,6 +5,9 @@ using LinearAlgebra
 using SummationByPartsOperators
 
 function evolve()
+    num_threads = Threads.nthreads()
+    BLAS.set_num_threads(num_threads)
+
     if size(ARGS, 1) == 1
         config_file = ARGS[1]
     else
@@ -72,6 +75,7 @@ function evolve()
     d = Derivatives3D(num_pts)
 
     # Init state and previous state
+    @info "Initializing state vector and previous state vector"
     for i in 0:(num_pts - 1)
         for j in 0:(num_pts - 1)
             for k in 0:(num_pts - 1)

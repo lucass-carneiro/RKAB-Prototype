@@ -43,9 +43,9 @@ end
 function compute_rhs!(D::DerivativeOperator, d::Derivatives3D, Pi, Dx, Dy, Dz, dy::GridFuncs3D)
     compute_Phi_rhs!(Pi, dy.Phi)
     compute_Pi_rhs!(D, d, Dx, Dy, Dz, dy.Pi)
-    du_dx_3d!(D, Pi, Dx)
-    du_dy_3d!(D, Pi, Dy)
-    du_dz_3d!(D, Pi, Dz)
+    du_dx_3d!(D, Pi, dy.Dx)
+    du_dy_3d!(D, Pi, dy.Dy)
+    du_dz_3d!(D, Pi, dy.Dz)
 end
 
 function compute_k0!(D::DerivativeOperator, ks::Substeps3D, d::Derivatives3D, yp::GridFuncs3D, dy::GridFuncs3D)
