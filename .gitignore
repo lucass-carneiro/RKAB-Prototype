@@ -9,3 +9,4 @@ plot/__pycache__
 *.png
 *.pdf
 *.nb
+*pb.gz

@@ -4,13 +4,7 @@ using HDF5
 using LinearAlgebra
 using SummationByPartsOperators
 
-function main()
-    if size(ARGS, 1) == 1
-        config_file = ARGS[1]
-    else
-        config_file = "param_1d.yaml"
-    end
-    
+function evolve_1d(config_file)
     @info "Using parameter file $config_file"
 
     config_data = Params1D(config_file)
@@ -108,5 +102,3 @@ function main()
 
     close(h5_file)
 end
-
-main()
