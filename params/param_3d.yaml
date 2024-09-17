@@ -6,7 +6,8 @@
   
   time:
     final: 1.0
-    cfl: 0.5
+    cfl: 0.9
+    method: "RKAB"
 
   standing-wave:
     A: 1.0
@@ -14,9 +15,8 @@
     ky: 1.0
     kz: 1.0
 
-  derivatives:
-    type: "periodic"
-    order: 4
+  boundary-type: "periodic"
+  derivative-order: 4
 
   RKAB-coeffs:
     c1: 0.3736646857963324

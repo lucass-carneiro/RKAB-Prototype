@@ -12,8 +12,18 @@ function evolve_3d(config_file)
     # Domain
     r0 = config_data.domain_start
     rf = config_data.domain_end
-    num_pts = config_data.domain_points
-    dr = (rf - r0) / (num_pts - 1)
+    
+    config_num_pts = config_data.domain_points
+    
+    if config_data.boundary_type == "periodic"
+        num_pts = config_num_pts
+        dr = (rf - r0) / num_pts
+    elseif config_data.boundary_type == "dirichlet"
+        num_pts = config_num_pts + 1
+        dr = (rf - r0) / config_num_pts
+    else
+         @error "Unrecognized boundary type $(config_data.derivatives_type)"
+    end
     
     # Time steps
     final_time = config_data.time_final
@@ -41,15 +51,15 @@ function evolve_3d(config_file)
     grid_group = create_group(h5_file, "grid")
 
     # Derivative operator
-    if config_data.derivative_type == "periodic"
-        D = periodic_central_derivative_operator(
-            1,
-            config_data.derivative_order,
-            r0,
-            rf,
-            num_pts
+    if config_data.boundary_type == "periodic"
+        D = periodic_derivative_operator(
+            derivative_order=1,
+            accuracy_order=config_data.derivative_order,
+            xmin=r0,
+            xmax=rf,
+            N=num_pts
         )
-    elseif config_data.derivative_type == "SBP"
+    else
         D = derivative_operator(
             DienerDorbandSchnetterTiglio2007(),
             derivative_order=1,
@@ -58,12 +68,14 @@ function evolve_3d(config_file)
             xmax=rf,
             N=num_pts
         )
-    else
-        @error "Unrecognized derivative type $(config_data.derivatives_type)"
-        return
     end
     
-    @info D
+    @info "Derivative operators used: $D"
+    
+    # Grids
+    grids = grid(D)
+    grids_array = collect(grids)
+    @info "Grids used: $grids"
 
     # GridFuncs
     y = GridFuncs3D(num_pts)
@@ -105,18 +117,24 @@ function evolve_3d(config_file)
     end
 
     # Write grid and initial state
-    attributes(h5_file)["last_iter"] = last_iter
+    attributes(h5_file)["final_time"] = final_time
     attributes(h5_file)["cfl"] = cfl
+    attributes(h5_file)["last_iter"] = last_iter
     attributes(h5_file)["dt"] = dt
+    attributes(h5_file)["time_stepping_method"] = config_data.time_method
+    
+    attributes(h5_file)["derivative_order"] = config_data.derivative_order
+    attributes(h5_file)["boundary_type"] = config_data.boundary_type
+    attributes(h5_file)["dr"] = dr
 
     attributes(h5_file)["A"] = A
     attributes(h5_file)["kx"] = kx
     attributes(h5_file)["ky"] = ky
     attributes(h5_file)["kz"] = kz
     
-    write(grid_group, "x_coords", collect(grid(D)))
-    write(grid_group, "y_coords", collect(grid(D)))
-    write(grid_group, "z_coords", collect(grid(D)))
+    write(grid_group, "x_coords", grids_array)
+    write(grid_group, "y_coords", grids_array)
+    write(grid_group, "z_coords", grids_array)
     
     write_state(state_group, 0, y)
     write_rhs(rhs_group, 0, dy)
@@ -124,16 +142,24 @@ function evolve_3d(config_file)
     for i in 1:last_iter
         t = i * dt
         
+        # Step
         @info "Iteration $i, t = $t"
         @info "  Stepping"
-        rkab_step!(dt, cs, D, ks, d, yp, y, dy)
-        #euler_step!(dt, D, d, y, dy)
-
-        if config_data.derivative_type != "periodic"
-            @info "  Applying BCs"
+        if config_data.time_method == "RKAB"
+            rkab_step!(dt, cs, D, ks, d, yp, y, dy)
+        elseif config_data.time_method == "Euler"
+            euler_step!(dt, D, d, y, dy)
+        else
+            @error "Unrecognized time stepping method $(config_data.time_method)"
+        end
+        
+        # BCs    
+        @info "  Applying BCs"
+        if config_data.boundary_type == "dirichlet"
             apply_dirichlet_bcs!(A, kx, ky, kz, t, r0, dr, num_pts, y)
         end
 
+        # Save
         @info "  Saving"
         write_state(state_group, i, y)
         write_rhs(rhs_group, i, dy)

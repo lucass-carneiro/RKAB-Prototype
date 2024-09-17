@@ -134,13 +134,14 @@ struct Params3D
 
     time_final::Float64
     time_cfl::Float64
+    time_method::String
 
     standing_wave_A::Float64
     standing_wave_kx::Float64
     standing_wave_ky::Float64
     standing_wave_kz::Float64
 
-    derivative_type::String
+    boundary_type::String
     derivative_order::Int
 
     RKAB_coeffs::Array{Float64}
@@ -156,14 +157,15 @@ struct Params3D
 
         time_final = config_data["3d_params"]["time"]["final"]
         time_cfl = config_data["3d_params"]["time"]["cfl"]
+        time_method = config_data["3d_params"]["time"]["method"]
 
         standing_wave_A = config_data["3d_params"]["standing-wave"]["A"]
         standing_wave_kx = config_data["3d_params"]["standing-wave"]["kx"]
         standing_wave_ky = config_data["3d_params"]["standing-wave"]["ky"]
         standing_wave_kz = config_data["3d_params"]["standing-wave"]["kz"]
 
-        derivative_type = config_data["3d_params"]["derivatives"]["type"]
-        derivative_order = config_data["3d_params"]["derivatives"]["order"]
+        boundary_type = config_data["3d_params"]["boundary-type"]
+        derivative_order = config_data["3d_params"]["derivative-order"]
 
         c0 = 0.0
         c1 = config_data["3d_params"]["RKAB-coeffs"]["c1"]
@@ -186,11 +188,12 @@ struct Params3D
             domain_points,
             time_final,
             time_cfl,
+            time_method,
             standing_wave_A,
             standing_wave_kx,
             standing_wave_ky,
             standing_wave_kz,
-            derivative_type,
+            boundary_type,
             derivative_order,
             RKAB_coeffs,
             output_file

@@ -50,7 +50,7 @@ def plot_gfs_3d(x, y, data, levels, font_size, prefix, name, iteration, iteratio
     plt.xlabel("$x$", size=font_size)
     plt.ylabel("$y$", size=font_size)
 
-    plt.title(f"{prefix}/{name} at iteration {iteration}, $t = {t}$")
+    plt.title(f"{prefix}/{name} at iteration {iteration:04}, $t = {t:.15f}$")
 
     cb = plt.colorbar()
     cb.ax.set_ylabel(name)
