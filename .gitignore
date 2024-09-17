@@ -10,3 +10,4 @@ plot/__pycache__
 *.pdf
 *.nb
 *pb.gz
+*.yaml
