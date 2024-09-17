@@ -140,7 +140,8 @@ struct Params3D
     standing_wave_ky::Float64
     standing_wave_kz::Float64
 
-    SBP_accuracy_order::Int
+    derivative_type::String
+    derivative_order::Int
 
     RKAB_coeffs::Array{Float64}
 
@@ -161,7 +162,8 @@ struct Params3D
         standing_wave_ky = config_data["3d_params"]["standing-wave"]["ky"]
         standing_wave_kz = config_data["3d_params"]["standing-wave"]["kz"]
 
-        SBP_accuracy_order = config_data["3d_params"]["SBP-accuracy-order"]
+        derivative_type = config_data["3d_params"]["derivatives"]["type"]
+        derivative_order = config_data["3d_params"]["derivatives"]["order"]
 
         c0 = 0.0
         c1 = config_data["3d_params"]["RKAB-coeffs"]["c1"]
@@ -188,7 +190,8 @@ struct Params3D
             standing_wave_kx,
             standing_wave_ky,
             standing_wave_kz,
-            SBP_accuracy_order,
+            derivative_type,
+            derivative_order,
             RKAB_coeffs,
             output_file
         )

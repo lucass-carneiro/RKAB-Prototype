@@ -41,14 +41,29 @@ function evolve_3d(config_file)
     grid_group = create_group(h5_file, "grid")
 
     # Derivative operator
-    D = derivative_operator(
-        DienerDorbandSchnetterTiglio2007(),
-        derivative_order=1,
-        accuracy_order=config_data.SBP_accuracy_order,
-        xmin=r0,
-        xmax=rf,
-        N=num_pts
-    )
+    if config_data.derivative_type == "periodic"
+        D = periodic_central_derivative_operator(
+            1,
+            config_data.derivative_order,
+            r0,
+            rf,
+            num_pts
+        )
+    elseif config_data.derivative_type == "SBP"
+        D = derivative_operator(
+            DienerDorbandSchnetterTiglio2007(),
+            derivative_order=1,
+            accuracy_order=config_data.derivative_order,
+            xmin=r0,
+            xmax=rf,
+            N=num_pts
+        )
+    else
+        @error "Unrecognized derivative type $(config_data.derivatives_type)"
+        return
+    end
+    
+    @info D
 
     # GridFuncs
     y = GridFuncs3D(num_pts)
@@ -114,8 +129,10 @@ function evolve_3d(config_file)
         rkab_step!(dt, cs, D, ks, d, yp, y, dy)
         #euler_step!(dt, D, d, y, dy)
 
-        @info "  Applying BCs"
-        apply_dirichlet_bcs!(A, kx, ky, kz, t, r0, dr, num_pts, y)
+        if config_data.derivative_type != "periodic"
+            @info "  Applying BCs"
+            apply_dirichlet_bcs!(A, kx, ky, kz, t, r0, dr, num_pts, y)
+        end
 
         @info "  Saving"
         write_state(state_group, i, y)

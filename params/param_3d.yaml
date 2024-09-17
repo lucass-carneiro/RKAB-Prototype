@@ -2,10 +2,10 @@
   domain:
     start: -1.0
     end: 1.0
-    points: 81
+    points: 80
   
   time:
-    final: 2.0
+    final: 1.0
     cfl: 0.5
 
   standing-wave:
@@ -14,7 +14,9 @@
     ky: 1.0
     kz: 1.0
 
-  SBP-accuracy-order: 8
+  derivatives:
+    type: "periodic"
+    order: 4
 
   RKAB-coeffs:
     c1: 0.3736646857963324

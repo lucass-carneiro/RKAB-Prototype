@@ -25,14 +25,14 @@ function du_dz_3d!(D, u, dudz)
     end
 end
 
-function compute_Pi_rhs!(D::DerivativeOperator, d::Derivatives3D, Dx, Dy, Dz, Pi_rhs)
+function compute_Pi_rhs!(D, d::Derivatives3D, Dx, Dy, Dz, Pi_rhs)
     du_dx_3d!(D, Dx, d.dDx_dx)
     du_dy_3d!(D, Dy, d.dDy_dy)
     du_dz_3d!(D, Dz, d.dDz_dz)
     @. Pi_rhs = d.dDx_dx + d.dDy_dy + d.dDz_dz
 end
 
-function compute_rhs!(D::DerivativeOperator, d::Derivatives3D, y::GridFuncs3D, dy::GridFuncs3D)
+function compute_rhs!(D, d::Derivatives3D, y::GridFuncs3D, dy::GridFuncs3D)
     compute_Phi_rhs!(y.Pi, dy.Phi)
     compute_Pi_rhs!(D, d, y.Dx, y.Dy, y.Dz, dy.Pi)
     du_dx_3d!(D, y.Pi, dy.Dx)
@@ -40,7 +40,7 @@ function compute_rhs!(D::DerivativeOperator, d::Derivatives3D, y::GridFuncs3D, d
     du_dz_3d!(D, y.Pi, dy.Dz)
 end
 
-function compute_rhs!(D::DerivativeOperator, d::Derivatives3D, Pi, Dx, Dy, Dz, dy::GridFuncs3D)
+function compute_rhs!(D, d::Derivatives3D, Pi, Dx, Dy, Dz, dy::GridFuncs3D)
     compute_Phi_rhs!(Pi, dy.Phi)
     compute_Pi_rhs!(D, d, Dx, Dy, Dz, dy.Pi)
     du_dx_3d!(D, Pi, dy.Dx)
@@ -48,7 +48,7 @@ function compute_rhs!(D::DerivativeOperator, d::Derivatives3D, Pi, Dx, Dy, Dz, d
     du_dz_3d!(D, Pi, dy.Dz)
 end
 
-function compute_k0!(D::DerivativeOperator, ks::Substeps3D, d::Derivatives3D, yp::GridFuncs3D, dy::GridFuncs3D)
+function compute_k0!(D, ks::Substeps3D, d::Derivatives3D, yp::GridFuncs3D, dy::GridFuncs3D)
     # Compute the RHS on the previous time step and store it in dy
     compute_rhs!(D, d, yp, dy)
 
@@ -60,7 +60,7 @@ function compute_k0!(D::DerivativeOperator, ks::Substeps3D, d::Derivatives3D, yp
     copy!(ks.k0_Dz, dy.Dz)
 end
 
-function compute_k1!(h, cs, D::DerivativeOperator, ks::Substeps3D, d::Derivatives3D, y::GridFuncs3D, dy::GridFuncs3D)
+function compute_k1!(h, cs, D, ks::Substeps3D, d::Derivatives3D, y::GridFuncs3D, dy::GridFuncs3D)
     c0 = cs[1]
 
     # Step 1: Create the argument of the rhs call by storing it into k1
@@ -89,7 +89,7 @@ function compute_k1!(h, cs, D::DerivativeOperator, ks::Substeps3D, d::Derivative
     copy!(ks.k1_Dz, dy.Dz)
 end
 
-function compute_k2!(h, cs, D::DerivativeOperator, ks::Substeps3D, d::Derivatives3D, y::GridFuncs3D, dy::GridFuncs3D)
+function compute_k2!(h, cs, D, ks::Substeps3D, d::Derivatives3D, y::GridFuncs3D, dy::GridFuncs3D)
     c1 = cs[2]
     c2 = cs[3]
 
@@ -119,7 +119,7 @@ function compute_k2!(h, cs, D::DerivativeOperator, ks::Substeps3D, d::Derivative
     copy!(ks.k2_Dz, dy.Dz)
 end
 
-function compute_k3!(h, cs, D::DerivativeOperator, ks::Substeps3D, d::Derivatives3D, y::GridFuncs3D, dy::GridFuncs3D)
+function compute_k3!(h, cs, D, ks::Substeps3D, d::Derivatives3D, y::GridFuncs3D, dy::GridFuncs3D)
     c3 = cs[4]
     c4 = cs[5]
     c5 = cs[6]
@@ -150,7 +150,7 @@ function compute_k3!(h, cs, D::DerivativeOperator, ks::Substeps3D, d::Derivative
     copy!(ks.k3_Dz, dy.Dz)
 end
 
-function rkab_step!(h, cs, D::DerivativeOperator, ks::Substeps3D, d::Derivatives3D, yp::GridFuncs3D, y::GridFuncs3D, dy::GridFuncs3D)
+function rkab_step!(h, cs, D, ks::Substeps3D, d::Derivatives3D, yp::GridFuncs3D, y::GridFuncs3D, dy::GridFuncs3D)
     c6 = cs[7]
     c7 = cs[8]
     c8 = cs[9]
@@ -177,7 +177,7 @@ function rkab_step!(h, cs, D::DerivativeOperator, ks::Substeps3D, d::Derivatives
     @. y.Dz =  y.Dz + h * (c6 * ks.k0_Dz + c7 * ks.k1_Dz + c8 * ks.k2_Dz + c9 * ks.k3_Dz)
 end
 
-function euler_step!(h, D::DerivativeOperator, d::Derivatives3D, y::GridFuncs3D, dy::GridFuncs3D)
+function euler_step!(h, D, d::Derivatives3D, y::GridFuncs3D, dy::GridFuncs3D)
     # Step 1: Compute RHS
     compute_rhs!(D, d, y, dy)
 
