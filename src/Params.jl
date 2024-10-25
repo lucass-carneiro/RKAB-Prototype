@@ -136,6 +136,11 @@ struct Params3D
     time_cfl::Float64
     time_method::String
 
+    id_type::String
+
+    noise_seed::Int
+    noise_range::Float64
+
     standing_wave_A::Float64
     standing_wave_kx::Float64
     standing_wave_ky::Float64
@@ -159,10 +164,15 @@ struct Params3D
         time_cfl = config_data["3d_params"]["time"]["cfl"]
         time_method = config_data["3d_params"]["time"]["method"]
 
-        standing_wave_A = config_data["3d_params"]["standing-wave"]["A"]
-        standing_wave_kx = config_data["3d_params"]["standing-wave"]["kx"]
-        standing_wave_ky = config_data["3d_params"]["standing-wave"]["ky"]
-        standing_wave_kz = config_data["3d_params"]["standing-wave"]["kz"]
+        id_type = config_data["3d_params"]["id-type"]
+
+        noise_seed = id_type == "noise" ? config_data["3d_params"]["noise"]["seed"] : 0
+        noise_range = id_type == "noise" ? abs(config_data["3d_params"]["noise"]["range"]) : 0.0
+
+        standing_wave_A = id_type == "standing" ? config_data["3d_params"]["standing-wave"]["A"] : 0.0
+        standing_wave_kx = id_type == "standing" ? config_data["3d_params"]["standing-wave"]["kx"] : 0.0
+        standing_wave_ky = id_type == "standing" ? config_data["3d_params"]["standing-wave"]["ky"] : 0.0
+        standing_wave_kz = id_type == "standing" ? config_data["3d_params"]["standing-wave"]["kz"] : 0.0
 
         boundary_type = config_data["3d_params"]["boundary-type"]
         derivative_order = config_data["3d_params"]["derivative-order"]
@@ -189,6 +199,9 @@ struct Params3D
             time_final,
             time_cfl,
             time_method,
+            id_type,
+            noise_seed,
+            noise_range,
             standing_wave_A,
             standing_wave_kx,
             standing_wave_ky,

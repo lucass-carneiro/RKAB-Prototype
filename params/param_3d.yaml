@@ -9,6 +9,12 @@
     cfl: 0.9
     method: "RKAB"
 
+  id-type: "noise"
+
+  noise:
+    seed: 100
+    range: 1.0e-7
+
   standing-wave:
     A: 1.0
     kx: 1.0

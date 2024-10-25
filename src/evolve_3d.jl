@@ -3,6 +3,7 @@ using RKAB
 using HDF5
 using LinearAlgebra
 using SummationByPartsOperators
+using Random
 
 function evolve_3d(config_file)
     @info "Using parameter file $config_file"
@@ -34,13 +35,7 @@ function evolve_3d(config_file)
     @info "Spatial step = $dr"
     @info "Time step = $dt"
     @info "Total iterations: $last_iter"
-
-    # Standing wave params
-    A = config_data.standing_wave_A
-    kx = config_data.standing_wave_kx
-    ky = config_data.standing_wave_ky
-    kz = config_data.standing_wave_kz
-
+    
     # RKAB cs    
     cs = config_data.RKAB_coeffs
 
@@ -94,26 +89,69 @@ function evolve_3d(config_file)
 
     # Init state and previous state
     @info "Initializing state vector and previous state vector"
-    for i in 0:(num_pts - 1)
-        for j in 0:(num_pts - 1)
-            for k in 0:(num_pts - 1)
-                X = r0 + i * dr
-                Y = r0 + j * dr
-                Z = r0 + k * dr
-                
-                y.Phi[i + 1, j + 1, k + 1] = sw_Phi(A, kx, ky, kz, 0.0, X, Y, Z)
-                y.Pi[i + 1, j + 1, k + 1] = sw_Pi(A, kx, ky, kz, 0.0, X, Y, Z)
-                y.Dx[i + 1, j + 1, k + 1] = sw_Dx(A, kx, ky, kz, 0.0, X, Y, Z)
-                y.Dy[i + 1, j + 1, k + 1] = sw_Dy(A, kx, ky, kz, 0.0, X, Y, Z)
-                y.Dz[i + 1, j + 1, k + 1] = sw_Dz(A, kx, ky, kz, 0.0, X, Y, Z)
+    if config_data.id_type == "standing"
+        A = config_data.standing_wave_A
+        kx = config_data.standing_wave_kx
+        ky = config_data.standing_wave_ky
+        kz = config_data.standing_wave_kz
 
-                yp.Phi[i + 1, j + 1, k + 1] = sw_Phi(A, kx, ky, kz, -dt, X, Y, Z)
-                yp.Pi[i + 1, j + 1, k + 1] = sw_Pi(A, kx, ky, kz, -dt, X, Y, Z)
-                yp.Dx[i + 1, j + 1, k + 1] = sw_Dx(A, kx, ky, kz, -dt, X, Y, Z)
-                yp.Dy[i + 1, j + 1, k + 1] = sw_Dy(A, kx, ky, kz, -dt, X, Y, Z)
-                yp.Dz[i + 1, j + 1, k + 1] = sw_Dz(A, kx, ky, kz, -dt, X, Y, Z)
+        attributes(h5_file)["id_type"] = "standing"
+        attributes(h5_file)["A"] = A
+        attributes(h5_file)["kx"] = kx
+        attributes(h5_file)["ky"] = ky
+        attributes(h5_file)["kz"] = kz
+        
+        for i in 0:(num_pts - 1)
+            for j in 0:(num_pts - 1)
+                for k in 0:(num_pts - 1)
+                    X = r0 + i * dr
+                    Y = r0 + j * dr
+                    Z = r0 + k * dr
+                    
+                    y.Phi[i + 1, j + 1, k + 1] = sw_Phi(A, kx, ky, kz, 0.0, X, Y, Z)
+                    y.Pi[i + 1, j + 1, k + 1] = sw_Pi(A, kx, ky, kz, 0.0, X, Y, Z)
+                    y.Dx[i + 1, j + 1, k + 1] = sw_Dx(A, kx, ky, kz, 0.0, X, Y, Z)
+                    y.Dy[i + 1, j + 1, k + 1] = sw_Dy(A, kx, ky, kz, 0.0, X, Y, Z)
+                    y.Dz[i + 1, j + 1, k + 1] = sw_Dz(A, kx, ky, kz, 0.0, X, Y, Z)
+
+                    yp.Phi[i + 1, j + 1, k + 1] = sw_Phi(A, kx, ky, kz, -dt, X, Y, Z)
+                    yp.Pi[i + 1, j + 1, k + 1] = sw_Pi(A, kx, ky, kz, -dt, X, Y, Z)
+                    yp.Dx[i + 1, j + 1, k + 1] = sw_Dx(A, kx, ky, kz, -dt, X, Y, Z)
+                    yp.Dy[i + 1, j + 1, k + 1] = sw_Dy(A, kx, ky, kz, -dt, X, Y, Z)
+                    yp.Dz[i + 1, j + 1, k + 1] = sw_Dz(A, kx, ky, kz, -dt, X, Y, Z)
+                end
             end
         end
+    elseif config_data.id_type == "noise"
+        seed = config_data.noise_seed
+        range = config_data.noise_range
+        
+        rng = MersenneTwister(seed)
+        distrib_range = -range:(2.0 * range / num_pts):range
+
+        attributes(h5_file)["id_type"] = "noise"
+        attributes(h5_file)["seed"] = seed
+        attributes(h5_file)["range"] = range
+        
+        for i in 0:(num_pts - 1)
+            for j in 0:(num_pts - 1)
+                for k in 0:(num_pts - 1)                    
+                    y.Phi[i + 1, j + 1, k + 1] = rand(rng, distrib_range)
+                    y.Pi[i + 1, j + 1, k + 1] = rand(rng, distrib_range)
+                    y.Dx[i + 1, j + 1, k + 1] = rand(rng, distrib_range)
+                    y.Dy[i + 1, j + 1, k + 1] = rand(rng, distrib_range)
+                    y.Dz[i + 1, j + 1, k + 1] = rand(rng, distrib_range)
+
+                    yp.Phi[i + 1, j + 1, k + 1] = rand(rng, distrib_range)
+                    yp.Pi[i + 1, j + 1, k + 1] = rand(rng, distrib_range)
+                    yp.Dx[i + 1, j + 1, k + 1] = rand(rng, distrib_range)
+                    yp.Dy[i + 1, j + 1, k + 1] = rand(rng, distrib_range)
+                    yp.Dz[i + 1, j + 1, k + 1] = rand(rng, distrib_range)
+                end
+            end
+        end
+    else
+        @error "Unrecognized initial data $(config_data.id_type)"
     end
 
     # Write grid and initial state
@@ -126,11 +164,6 @@ function evolve_3d(config_file)
     attributes(h5_file)["derivative_order"] = config_data.derivative_order
     attributes(h5_file)["boundary_type"] = config_data.boundary_type
     attributes(h5_file)["dr"] = dr
-
-    attributes(h5_file)["A"] = A
-    attributes(h5_file)["kx"] = kx
-    attributes(h5_file)["ky"] = ky
-    attributes(h5_file)["kz"] = kz
     
     write(grid_group, "x_coords", grids_array)
     write(grid_group, "y_coords", grids_array)
