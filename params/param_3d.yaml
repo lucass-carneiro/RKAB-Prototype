@@ -9,7 +9,7 @@
     cfl: 0.9
     method: "RKAB"
 
-  id-type: "noise"
+  id-type: "standing"
 
   noise:
     seed: 100

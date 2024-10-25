@@ -119,10 +119,13 @@ def plot_3d(args, font_size, h5_file):
 
     X, Y = np.meshgrid(x, y)
 
-    A = h5_file.attrs["A"]
-    kx = h5_file.attrs["kx"]
-    ky = h5_file.attrs["ky"]
-    kz = h5_file.attrs["kz"]
+    id_type = h5_file.attrs["id_type"]
+
+    if id_type == b"standing":
+        A = h5_file.attrs["A"]
+        kx = h5_file.attrs["kx"]
+        ky = h5_file.attrs["ky"]
+        kz = h5_file.attrs["kz"]
 
     if args["--iterations"] != "all":
         iteration_range = range(
@@ -165,11 +168,15 @@ def plot_3d(args, font_size, h5_file):
     if not os.path.exists(rhs_dir):
         os.mkdir(rhs_dir)
 
-    if not os.path.exists(expected_dir):
+    if not os.path.exists(expected_dir) and id_type != b"noise":
         os.mkdir(expected_dir)
 
-    level_array = np.linspace(-1.0, 1.0, endpoint=True, num=101)
-    err_level_array = np.linspace(0.0, 1.0, endpoint=True, num=101)
+    if args["--autorange"]:
+        levels = 100
+    else:
+        varmin = float(args["--varmin"])
+        varmax = float(args["--varmax"])
+        levels = np.linspace(varmin, varmax, endpoint=True, num=101)
 
     with concurrent.futures.ProcessPoolExecutor() as executor:
         for i in iteration_range:
@@ -182,11 +189,6 @@ def plot_3d(args, font_size, h5_file):
             for gf in gfs:
                 path = f"state/{gf}_{iteration_string}"
                 data = h5_file[path][slice_idx, :, :]
-
-                if gf == "Phi":
-                    levels = level_array
-                else:
-                    levels = 100
 
                 executor.submit(
                     plot_gfs_3d,
@@ -224,36 +226,37 @@ def plot_3d(args, font_size, h5_file):
                 )
 
             # Plot Error
-            for gf in gfs:
-                path = f"state/{gf}_{iteration_string}"
-                data = h5_file[path][slice_idx, :, :]
+            if id_type != b"noise":
+                for gf in gfs:
+                    path = f"state/{gf}_{iteration_string}"
+                    data = h5_file[path][slice_idx, :, :]
 
-                z = np.abs(
-                    eval(f"sw_{gf}_3d")(
-                        A,
-                        kx,
-                        ky,
-                        kz,
-                        t,
+                    z = np.abs(
+                        eval(f"sw_{gf}_3d")(
+                            A,
+                            kx,
+                            ky,
+                            kz,
+                            t,
+                            X,
+                            Y,
+                            slice_value
+                        ) - data
+                    )
+
+                    executor.submit(
+                        plot_expected_3d,
                         X,
                         Y,
-                        slice_value
-                    ) - data
-                )
-
-                executor.submit(
-                    plot_expected_3d,
-                    X,
-                    Y,
-                    z,
-                    100,
-                    font_size,
-                    "state",
-                    gf,
-                    i,
-                    iteration_string,
-                    t,
-                    expected_dir
-                )
+                        z,
+                        100,
+                        font_size,
+                        "state",
+                        gf,
+                        i,
+                        iteration_string,
+                        t,
+                        expected_dir
+                    )
 
         logger.info(f"Waiting for plot workers to finish")

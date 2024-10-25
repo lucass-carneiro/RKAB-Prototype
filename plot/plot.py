@@ -14,6 +14,9 @@ Options:
   --iterations=<number>   Plot a specific iteration or all [default: all]
   --font-size=<size>      The size of the font in plots [default: 18]
   --slice-value=<value>   The value of the slicing coordinate [default: 0.0]
+  --autorange             Automatically select plot ranges. If set, ignores varmin and varmax.
+  --varmin=<value>        Min. value for the plot variable [default: -1.0].
+  --varmax=<value>        Max. value for the plot variable [default: 1.0].
 """
 from docopt import docopt
 
