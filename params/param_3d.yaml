@@ -34,4 +34,7 @@
     c7: 2.754535159970365
     c8: 3.414713672966062
 
-  output: 3d_output.h5
+  output:
+    name: 3d_output.h5
+    every: 1
+    rhs: true

@@ -35,6 +35,7 @@ function evolve_3d(config_file)
     @info "Spatial step = $dr"
     @info "Time step = $dt"
     @info "Total iterations: $last_iter"
+    @info "Save every $(config_data.output_every) iterations"
     
     # RKAB cs    
     cs = config_data.RKAB_coeffs
@@ -170,7 +171,11 @@ function evolve_3d(config_file)
     write(grid_group, "z_coords", grids_array)
     
     write_state(state_group, 0, y)
-    write_rhs(rhs_group, 0, dy)
+    if config_data.output_rhs
+        write_rhs(rhs_group, 0, dy)
+    end
+
+    out_every_counter = 1
 
     for i in 1:last_iter
         t = i * dt
@@ -187,15 +192,24 @@ function evolve_3d(config_file)
         end
         
         # BCs    
-        @info "  Applying BCs"
         if config_data.boundary_type == "dirichlet"
+            @info "  Applying BCs"
             apply_dirichlet_bcs!(A, kx, ky, kz, t, r0, dr, num_pts, y)
         end
 
         # Save
-        @info "  Saving"
-        write_state(state_group, i, y)
-        write_rhs(rhs_group, i, dy)
+        if out_every_counter == config_data.output_every
+            @info "  Saving"
+            write_state(state_group, i, y)
+            
+            if config_data.output_rhs
+                write_rhs(rhs_group, i, dy)
+            end
+            
+            out_every_counter = 1
+        else
+            out_every_counter += 1
+        end
     end
 
     close(h5_file)

@@ -152,6 +152,8 @@ struct Params3D
     RKAB_coeffs::Array{Float64}
 
     output_file::String
+    output_every::Int
+    output_rhs::Bool
 
     function Params3D(config_file)
         config_data = YAML.load_file(config_file)
@@ -190,7 +192,9 @@ struct Params3D
 
         RKAB_coeffs = [c0, c1, c2, c3, c4, c5, c6, c7, c8, c9]
 
-        output_file = config_data["3d_params"]["output"]
+        output_file = config_data["3d_params"]["output"]["name"]
+        output_every = config_data["3d_params"]["output"]["every"]
+        output_rhs = config_data["3d_params"]["output"]["rhs"]
 
         return new(
             domain_start,
@@ -209,7 +213,9 @@ struct Params3D
             boundary_type,
             derivative_order,
             RKAB_coeffs,
-            output_file
+            output_file,
+            output_every,
+            output_rhs
         )
     end
 end

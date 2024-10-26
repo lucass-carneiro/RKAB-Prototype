@@ -50,7 +50,7 @@ def plot_gfs_3d(x, y, data, levels, font_size, prefix, name, iteration, iteratio
     plt.xlabel("$x$", size=font_size)
     plt.ylabel("$y$", size=font_size)
 
-    plt.title(f"{prefix}/{name} at iteration {iteration:04}, $t = {t:.15f}$")
+    plt.title(f"{prefix}/{name} at iteration {iteration:08}, $t = {t:.15f}$")
 
     cb = plt.colorbar()
     cb.ax.set_ylabel(name)
@@ -182,81 +182,87 @@ def plot_3d(args, font_size, h5_file):
         for i in iteration_range:
             logger.info(f"Dispatching plot of iteration {i}")
 
-            iteration_string = f"{i:04}"
+            iteration_string = f"{i:08}"
             t = i * dt
 
             # Plot State
             for gf in gfs:
                 path = f"state/{gf}_{iteration_string}"
-                data = h5_file[path][slice_idx, :, :]
 
-                executor.submit(
-                    plot_gfs_3d,
-                    X,
-                    Y,
-                    data,
-                    levels,
-                    font_size,
-                    "state",
-                    gf,
-                    i,
-                    iteration_string,
-                    t,
-                    state_dir
-                )
-
-            # Plot RHS
-            for gf in rhs_gfs:
-                path = f"rhs/{gf}_{iteration_string}"
-                data = h5_file[path][slice_idx, :, :]
-
-                executor.submit(
-                    plot_gfs_3d,
-                    X,
-                    Y,
-                    data,
-                    100,
-                    font_size,
-                    "rhs",
-                    gf,
-                    i,
-                    iteration_string,
-                    t,
-                    rhs_dir
-                )
-
-            # Plot Error
-            if id_type != b"noise":
-                for gf in gfs:
-                    path = f"state/{gf}_{iteration_string}"
+                if path in h5_file:
                     data = h5_file[path][slice_idx, :, :]
 
-                    z = np.abs(
-                        eval(f"sw_{gf}_3d")(
-                            A,
-                            kx,
-                            ky,
-                            kz,
-                            t,
-                            X,
-                            Y,
-                            slice_value
-                        ) - data
-                    )
-
                     executor.submit(
-                        plot_expected_3d,
+                        plot_gfs_3d,
                         X,
                         Y,
-                        z,
-                        100,
+                        data,
+                        levels,
                         font_size,
                         "state",
                         gf,
                         i,
                         iteration_string,
                         t,
-                        expected_dir
+                        state_dir
                     )
+
+            # Plot RHS
+            for gf in rhs_gfs:
+                path = f"rhs/{gf}_{iteration_string}"
+
+                if path in h5_file:
+                    data = h5_file[path][slice_idx, :, :]
+
+                    executor.submit(
+                        plot_gfs_3d,
+                        X,
+                        Y,
+                        data,
+                        100,
+                        font_size,
+                        "rhs",
+                        gf,
+                        i,
+                        iteration_string,
+                        t,
+                        rhs_dir
+                    )
+
+            # Plot Error
+            if id_type != b"noise":
+                for gf in gfs:
+                    path = f"state/{gf}_{iteration_string}"
+
+                    if path in h5_file:
+                        data = h5_file[path][slice_idx, :, :]
+
+                        z = np.abs(
+                            eval(f"sw_{gf}_3d")(
+                                A,
+                                kx,
+                                ky,
+                                kz,
+                                t,
+                                X,
+                                Y,
+                                slice_value
+                            ) - data
+                        )
+
+                        executor.submit(
+                            plot_expected_3d,
+                            X,
+                            Y,
+                            z,
+                            100,
+                            font_size,
+                            "state",
+                            gf,
+                            i,
+                            iteration_string,
+                            t,
+                            expected_dir
+                        )
 
         logger.info(f"Waiting for plot workers to finish")
