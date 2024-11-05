@@ -5,6 +5,7 @@ using PProf
 include("evolve_1d.jl")
 include("evolve_2d.jl")
 include("evolve_3d.jl")
+include("evolve_1d_burgers.jl")
 
 function main(args)
     s = ArgParseSettings(
@@ -20,8 +21,8 @@ function main(args)
         "--mem-profile"
             help = "Run the memory profiler"
             nargs = 0 
-        "dims"
-            help = "Dimensionality of the evolution: 1D, 2D or 3D"
+        "mode"
+            help = "Mode of the evolution"
             required = true
             default = "3D"
         "param_file"
@@ -38,12 +39,17 @@ function main(args)
         Profile.clear() 
 
         # Export pprof profile and open interactive profiling web interface.
-        if parsed_args["dims"] == "1D" || parsed_args["dims"] == "1d"
+        if parsed_args["mode"] == "1D" || parsed_args["mode"] == "1d"
             @profile evolve_1d(parsed_args["param_file"])
-        elseif parsed_args["dims"] == "2D" || parsed_args["dims"] == "2d"
+        elseif parsed_args["mode"] == "2D" || parsed_args["mode"] == "2d"
             @profile evolve_2d(parsed_args["param_file"])
-        elseif parsed_args["dims"] == "3D" || parsed_args["dims"] == "3d"
+        elseif parsed_args["mode"] == "3D" || parsed_args["mode"] == "3d"
             @profile evolve_3d(parsed_args["param_file"])
+        elseif parsed_args["mode"] == "1D-Burgers" || parsed_args["mode"] == "1d-burgers"
+            @profile evolve_1d_hydro(parsed_args["param_file"])
+        else
+            @error "Unrecognized mode of operation $(parsed_args["mode"])"
+            return 1
         end
 
         pprof()
@@ -53,14 +59,21 @@ function main(args)
         @info "Profiling CPU execution and memory usage"
     else
         @info "Regular evolution"
-        if parsed_args["dims"] == "1D" || parsed_args["dims"] == "1d"
+        if parsed_args["mode"] == "1D" || parsed_args["mode"] == "1d"
             evolve_1d(parsed_args["param_file"])
-        elseif parsed_args["dims"] == "2D" || parsed_args["dims"] == "2d"
+        elseif parsed_args["mode"] == "2D" || parsed_args["mode"] == "2d"
             evolve_2d(parsed_args["param_file"])
-        elseif parsed_args["dims"] == "3D" || parsed_args["dims"] == "3d"
+        elseif parsed_args["mode"] == "3D" || parsed_args["mode"] == "3d"
             evolve_3d(parsed_args["param_file"])
+        elseif parsed_args["mode"] == "1D-Burgers" || parsed_args["mode"] == "1d-burgers"
+            evolve_1d_hydro(parsed_args["param_file"])
+        else
+            @error "Unrecognized mode of operation $(parsed_args["mode"])"
+            return 1
         end
     end
+
+    return 0
 end
 
-main(ARGS)
+return main(ARGS)

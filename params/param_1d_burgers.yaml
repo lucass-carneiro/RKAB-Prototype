@@ -1,0 +1,15 @@
+1d_burgers_params:
+  domain:
+    start: -1.0
+    end: 1.0
+    cells: 80
+  
+  time:
+    final: 1.0
+    cfl: 0.9
+    method: "RKAB"
+
+  output:
+    name: 1d_burgers_output.h5
+    every: 1
+    rhs: true

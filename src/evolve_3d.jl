@@ -36,9 +36,6 @@ function evolve_3d(config_file)
     @info "Time step = $dt"
     @info "Total iterations: $last_iter"
     @info "Save every $(config_data.output_every) iterations"
-    
-    # RKAB cs    
-    cs = config_data.RKAB_coeffs
 
     # IO
     h5_file = h5open(config_data.output_file, "w")
@@ -81,6 +78,9 @@ function evolve_3d(config_file)
     
     # RHS
     dy = GridFuncs3D(num_pts)
+
+    # RKAB cs    
+    cs = config_data.RKAB_coeffs
 
     # RKAB Ks (k0 .. k3 for each variable)
     ks = Substeps3D(num_pts)
