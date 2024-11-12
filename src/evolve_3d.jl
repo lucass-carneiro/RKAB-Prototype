@@ -126,9 +126,6 @@ function evolve_3d(config_file)
     elseif config_data.id_type == "noise"
         seed = config_data.noise_seed
         range = config_data.noise_range
-        
-        rng = MersenneTwister(seed)
-        distrib_range = -range:(2.0 * range / num_pts):range
 
         attributes(h5_file)["id_type"] = "noise"
         attributes(h5_file)["seed"] = seed
@@ -136,18 +133,24 @@ function evolve_3d(config_file)
         
         for i in 0:(num_pts - 1)
             for j in 0:(num_pts - 1)
-                for k in 0:(num_pts - 1)                    
-                    y.Phi[i + 1, j + 1, k + 1] = rand(rng, distrib_range)
-                    y.Pi[i + 1, j + 1, k + 1] = rand(rng, distrib_range)
-                    y.Dx[i + 1, j + 1, k + 1] = rand(rng, distrib_range)
-                    y.Dy[i + 1, j + 1, k + 1] = rand(rng, distrib_range)
-                    y.Dz[i + 1, j + 1, k + 1] = rand(rng, distrib_range)
+                for k in 0:(num_pts - 1)
+                    X = r0 + i * dr
+                    Y = r0 + j * dr
+                    Z = r0 + k * dr
 
-                    yp.Phi[i + 1, j + 1, k + 1] = rand(rng, distrib_range)
-                    yp.Pi[i + 1, j + 1, k + 1] = rand(rng, distrib_range)
-                    yp.Dx[i + 1, j + 1, k + 1] = rand(rng, distrib_range)
-                    yp.Dy[i + 1, j + 1, k + 1] = rand(rng, distrib_range)
-                    yp.Dz[i + 1, j + 1, k + 1] = rand(rng, distrib_range)
+                    noise_val = range * sin(seed * X / dr) * sin(seed * Y / dr) * sin(seed * Z / dr)
+
+                    y.Phi[i + 1, j + 1, k + 1] = noise_val
+                    y.Pi[i + 1, j + 1, k + 1] = noise_val
+                    y.Dx[i + 1, j + 1, k + 1] = noise_val
+                    y.Dy[i + 1, j + 1, k + 1] = noise_val
+                    y.Dz[i + 1, j + 1, k + 1] = noise_val
+
+                    yp.Phi[i + 1, j + 1, k + 1] = noise_val
+                    yp.Pi[i + 1, j + 1, k + 1] = noise_val
+                    yp.Dx[i + 1, j + 1, k + 1] = noise_val
+                    yp.Dy[i + 1, j + 1, k + 1] = noise_val
+                    yp.Dz[i + 1, j + 1, k + 1] = noise_val
                 end
             end
         end
