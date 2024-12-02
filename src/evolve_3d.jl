@@ -187,7 +187,8 @@ function evolve_3d(config_file)
         @info "Iteration $i, t = $t"
         @info "  Stepping"
         if config_data.time_method == "RKAB"
-            rkab_step!(dt, cs, D, ks, d, yp, y, dy)
+            #rkab_step!(dt, cs, D, ks, d, yp, y, dy)
+            rkab2_step!(dt, cs, D, ks, d, yp, y, dy)
         elseif config_data.time_method == "Euler"
             euler_step!(dt, D, d, y, dy)
         else

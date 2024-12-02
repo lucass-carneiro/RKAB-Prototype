@@ -27,7 +27,7 @@ export sw_Phi
 export sw_Pi
 export sw_Dx, sw_Dy, sw_Dz
 
-export rkab_step!
+export rkab_step!, rkab2_step!
 export euler_step!
 
 export apply_dirichlet_bcs!

@@ -189,6 +189,65 @@ function euler_step!(h, D, d::Derivatives3D, y::GridFuncs3D, dy::GridFuncs3D)
     @. y.Dz = y.Dz + h * dy.Dz
 end
 
+function rkab2_step!(h, cs, D, ks::Substeps3D, d::Derivatives3D, yp::GridFuncs3D, y::GridFuncs3D, dy::GridFuncs3D)
+    # Coefficients
+    a10 = -0.25
+    b0 = -1.0
+    b1 = 2.0
+
+    # == k0 ==
+    # Compute the RHS on the previous time step and store it in dy
+    compute_rhs!(D, d, yp, dy)
+
+    # Copy dy to k0
+    copy!(ks.k0_Phi, dy.Phi)
+    copy!(ks.k0_Pi, dy.Pi)
+    copy!(ks.k0_Dx, dy.Dx)
+    copy!(ks.k0_Dy, dy.Dy)
+    copy!(ks.k0_Dz, dy.Dz)
+
+    # == k1 ==
+    # Create the argument of the rhs call by storing it into k1
+    @. ks.k1_Phi = y.Phi + h * a10 * ks.k0_Phi
+    @. ks.k1_Pi = y.Pi + h * a10 * ks.k0_Pi
+    @. ks.k1_Dx = y.Dx + h * a10 * ks.k0_Dx
+    @. ks.k1_Dy = y.Dy + h * a10 * ks.k0_Dy
+    @. ks.k1_Dz = y.Dz + h * a10 * ks.k0_Dz
+
+    # Compute the RHS using the values in ks.k1_[...] as state
+    compute_rhs!(
+        D,
+        d,
+        ks.k1_Pi,
+        ks.k1_Dx,
+        ks.k1_Dy,
+        ks.k1_Dz,
+        dy
+    )
+
+    # Copy the results in dy back to ks.k1_[...]
+    copy!(ks.k1_Phi, dy.Phi)
+    copy!(ks.k1_Pi, dy.Pi)
+    copy!(ks.k1_Dx, dy.Dx)
+    copy!(ks.k1_Dy, dy.Dy)
+    copy!(ks.k1_Dz, dy.Dz)
+
+    # == Update ==
+    # Store the current state vector as the previous state vector
+    copy!(yp.Phi, y.Phi)
+    copy!(yp.Pi, y.Pi)
+    copy!(yp.Dx, y.Dx)
+    copy!(yp.Dy, y.Dy)
+    copy!(yp.Dz, y.Dz)
+
+    # Step 3: Apply the evolution formula
+    @. y.Phi =  y.Phi + h * (b0 * ks.k0_Phi + b1 * ks.k1_Phi)
+    @. y.Pi =  y.Pi + h * (b0 * ks.k0_Pi + b1 * ks.k1_Pi)
+    @. y.Dx =  y.Dx + h * (b0 * ks.k0_Dx + b1 * ks.k1_Dx)
+    @. y.Dy =  y.Dy + h * (b0 * ks.k0_Dy + b1 * ks.k1_Dy)
+    @. y.Dz =  y.Dz + h * (b0 * ks.k0_Dz + b1 * ks.k1_Dz)
+end
+
 function apply_dirichlet_bcs!(A, kx, ky, kz, t, r0, dr, num_pts, y::GridFuncs3D)
     for i in 0:(num_pts - 1)
         for j in 0:(num_pts - 1)
