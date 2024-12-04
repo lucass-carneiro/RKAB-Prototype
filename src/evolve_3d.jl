@@ -90,13 +90,15 @@ function evolve_3d(config_file)
 
     # Init state and previous state
     @info "Initializing state vector and previous state vector"
+    
+    attributes(h5_file)["id_type"] = config_data.id_type
+    
     if config_data.id_type == "standing"
         A = config_data.standing_wave_A
         kx = config_data.standing_wave_kx
         ky = config_data.standing_wave_ky
         kz = config_data.standing_wave_kz
 
-        attributes(h5_file)["id_type"] = "standing"
         attributes(h5_file)["A"] = A
         attributes(h5_file)["kx"] = kx
         attributes(h5_file)["ky"] = ky
@@ -127,7 +129,6 @@ function evolve_3d(config_file)
         seed = config_data.noise_seed
         range = config_data.noise_range
 
-        attributes(h5_file)["id_type"] = "noise"
         attributes(h5_file)["seed"] = seed
         attributes(h5_file)["range"] = range
         
@@ -156,6 +157,7 @@ function evolve_3d(config_file)
         end
     else
         @error "Unrecognized initial data $(config_data.id_type)"
+        return
     end
 
     # Write grid and initial state
@@ -187,7 +189,8 @@ function evolve_3d(config_file)
         @info "Iteration $i, t = $t"
         @info "  Stepping"
         if config_data.time_method == "RKAB"
-            #rkab_step!(dt, cs, D, ks, d, yp, y, dy)
+            rkab_step!(dt, cs, D, ks, d, yp, y, dy)
+        elseif config_data.time_method == "RKAB2"
             rkab2_step!(dt, cs, D, ks, d, yp, y, dy)
         elseif config_data.time_method == "Euler"
             euler_step!(dt, D, d, y, dy)

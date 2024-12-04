@@ -5,7 +5,6 @@ using PProf
 include("evolve_1d.jl")
 include("evolve_2d.jl")
 include("evolve_3d.jl")
-include("evolve_1d_burgers.jl")
 
 function main(args)
     s = ArgParseSettings(
@@ -45,8 +44,6 @@ function main(args)
             @profile evolve_2d(parsed_args["param_file"])
         elseif parsed_args["mode"] == "3D" || parsed_args["mode"] == "3d"
             @profile evolve_3d(parsed_args["param_file"])
-        elseif parsed_args["mode"] == "1D-Burgers" || parsed_args["mode"] == "1d-burgers"
-            @profile evolve_1d_hydro(parsed_args["param_file"])
         else
             @error "Unrecognized mode of operation $(parsed_args["mode"])"
             return 1
@@ -65,8 +62,6 @@ function main(args)
             evolve_2d(parsed_args["param_file"])
         elseif parsed_args["mode"] == "3D" || parsed_args["mode"] == "3d"
             evolve_3d(parsed_args["param_file"])
-        elseif parsed_args["mode"] == "1D-Burgers" || parsed_args["mode"] == "1d-burgers"
-            evolve_1d_hydro(parsed_args["param_file"])
         else
             @error "Unrecognized mode of operation $(parsed_args["mode"])"
             return 1

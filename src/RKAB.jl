@@ -21,7 +21,7 @@ export Substeps, Substeps2D, Substeps3D
 
 export Derivatives2D, Derivatives3D
 
-export Params1D, Params2D, Params3D, Params1DBurgers
+export Params1D, Params2D, Params3D
 
 export sw_Phi
 export sw_Pi
